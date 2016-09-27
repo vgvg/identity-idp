@@ -4,7 +4,7 @@ h1.heading = t('headings.log_in')
 = simple_form_for(resource,
                   as: resource_name,
                   url: session_path(resource_name),
-                  html: { autocomplete: 'off', role: 'form' }) do |f|
+                  html: { autocomplete: 'privacy_first', role: 'form' }) do |f|
   = f.input :email, required: true
   = f.input :password, required: true
   = f.button :submit, t('headings.log_in'), class: 'btn-wide mt2 mb4'
