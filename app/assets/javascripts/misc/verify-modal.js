@@ -20,7 +20,7 @@ function verifyModal() {
       el.classList.add('modal-cntnr');
       el.innerHTML = `
         <div class="px2 py4 modal-inner">
-          <div class="mx-auto p4 cntnr-xskinny border-box bg-white rounded-xxl modal-${name}">
+          <div class="mx-auto p4 cntnr-xxskinny border-box bg-white rounded-xxl modal-${name}">
             <h2 class="my2 fs-20p sans-serif regular center">${heading.innerHTML}</h2>
             <hr class="mb3 bw4 rounded">
             <p>${content.innerHTML}</p>
