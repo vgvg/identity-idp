@@ -13,7 +13,10 @@ module SignUp
 
     def new
       ab_finished(:demo)
+
+      session[:registering] = true
       @register_user_email_form = RegisterUserEmailForm.new
+      @view_model = CancelActions.new(current_user: current_user, session: session)
       analytics.track_event(Analytics::USER_REGISTRATION_ENTER_EMAIL_VISIT)
     end
 
@@ -48,6 +51,10 @@ module SignUp
 
       resend_confirmation = params[:user][:resend]
       session[:email] = user.email
+      # TODO: document in PR why this was added
+      # we need to handle the case in which a user is signing up, but does
+      # not currently have an account i.e., the screen when they enter their email
+      session.delete(:registering)
 
       redirect_to sign_up_verify_email_path(resend: resend_confirmation)
     end

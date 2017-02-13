@@ -3,6 +3,8 @@ module SignUp
     include UnconfirmedUserConcern
 
     def create
+      p current_user
+      p session
       with_unconfirmed_user do
         result = EmailConfirmationTokenValidator.new(@user).submit
 

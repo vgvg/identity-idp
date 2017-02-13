@@ -12,6 +12,4 @@ p.mt-tiny.mb0#email-description = t('instructions.registration.email')
   p.mb-40p == t('notices.terms_of_service.text', link: link)
   = f.button :submit, t('forms.buttons.submit.default'), class: 'btn-wide mb4'
 
-.clearfix.pt1.border-top
-  - auth_link = link_to t('links.sign_in'), new_user_session_path
-  .sm-col-right == t('instructions.registration.already_have_account', link: auth_link)
+= render 'shared/cancel', link: root_path, view_model: @view_model

@@ -9,6 +9,9 @@ module SignUp
           service_provider_attributes
         )
       else
+        p '======='
+        p 'WE ARE REDIRECTING TO LOGIN< I THINK'
+        p '======='
         redirect_to new_user_session_url
       end
     end

@@ -1,0 +1,4 @@
+button(type='button' class='btn btn-link' id="loa-cancel")
+  = view_model.cancel_link_text
+
+= render 'shared/loa_modal', verification_context: view_model.user_verifying_identity?

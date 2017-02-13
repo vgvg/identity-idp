@@ -1,6 +1,6 @@
 class UsersController < ApplicationController
   def destroy
-    return unless current_user.destroy!
+    current_user.destroy! unless current_user.nil?
 
     flash[:success] = t('loa1.cancel.success')
     redirect_to root_path
