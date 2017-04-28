@@ -139,6 +139,7 @@ production:
     sp_initiated_login_url: 'http://localhost:4567/test/saml'
     block_encryption: 'aes256-cbc'
     cert: 'sp_sinatra_demo'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -147,8 +148,8 @@ production:
     assertion_consumer_logout_service_url: 'https://sp-sinatra.dev.login.gov/slo_logout'
     sp_initiated_login_url: 'https://sp-sinatra.dev.login.gov/test/saml'
     block_encryption: 'aes256-cbc'
-    allow_on_prod_chef_env: 'false'
     cert: 'sp_sinatra_demo'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -158,6 +159,7 @@ production:
     sp_initiated_login_url: 'https://sp-sinatra.demo.login.gov/test/saml'
     block_encryption: 'aes256-cbc'
     cert: 'sp_sinatra_demo'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -185,6 +187,7 @@ production:
     friendly_name: 'Demo SP Application'
     logo: 'generic.svg'
     return_to_sp_url: 'https://sp.qa.login.gov'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -198,6 +201,7 @@ production:
     friendly_name: 'Demo SP Application'
     logo: 'generic.svg'
     return_to_sp_url: 'https://sp.int.login.gov'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -211,6 +215,7 @@ production:
     friendly_name: 'Demo SP Application'
     logo: 'generic.svg'
     return_to_sp_url: 'https://sp.demo.login.gov'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -225,6 +230,7 @@ production:
     agency: 'TTS Acquisition'
     friendly_name: 'Micro-purchase Dev'
     return_to_sp_url: 'http://localhost:3000'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -238,6 +244,7 @@ production:
     agency: 'TTS Acquisition'
     friendly_name: 'Micro-purchase Staging'
     return_to_sp_url: 'https://micropurchase-staging.18f.gov'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
