@@ -269,6 +269,7 @@ production:
     sp_initiated_login_url: 'https://dashboard.demo.login.gov/users/auth/saml'
     block_encryption: 'aes256-cbc'
     cert: 'identity_dashboard_cert'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -278,6 +279,7 @@ production:
     sp_initiated_login_url: 'https://dashboard.int.login.gov/users/auth/saml'
     block_encryption: 'aes256-cbc'
     cert: 'identity_dashboard_cert'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -287,6 +289,7 @@ production:
     sp_initiated_login_url: 'https://dashboard.qa.login.gov/users/auth/saml'
     block_encryption: 'aes256-cbc'
     cert: 'identity_dashboard_cert'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -296,6 +299,7 @@ production:
     sp_initiated_login_url: 'https://dashboard.dev.login.gov/users/auth/saml'
     block_encryption: 'aes256-cbc'
     cert: 'identity_dashboard_cert'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
