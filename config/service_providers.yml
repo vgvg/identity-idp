@@ -9,6 +9,7 @@ test:
     friendly_name: 'Your friendly Government Agency'
     logo: 'generic.svg'
     return_to_sp_url: 'http://localhost:3000'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
       - phone
@@ -21,6 +22,7 @@ test:
     friendly_name: 'Test SP'
     cert: 'saml_test_sp'
     logo: 'generic.svg'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - first_name
       - last_name
@@ -31,12 +33,14 @@ test:
     acs_url: 'http://example.com/test/saml/decode_assertion'
     assertion_consumer_logout_service_url: 'http://example.com/test/saml/decode_slo_request'
     block_encryption: 'aes256-cbc'
+    allow_on_prod_chef_env: 'false'
     cert: 'saml_test_sp'
 
   'http://test.host':
     acs_url: 'http://test.host/test/saml/decode_assertion'
     block_encryption: 'aes256-cbc'
     metadata_url: 'http://test.host/test/saml/metadata'
+    allow_on_prod_chef_env: 'false'
     sp_initiated_login_url: 'http://test.host/test/saml'
 
   'urn:gov:gsa:openidconnect:test':
@@ -44,11 +48,13 @@ test:
     cert: 'saml_test_sp'
     friendly_name: 'Example iOS App'
     agency: '18F'
+    allow_on_prod_chef_env: 'false'
     logo: 'generic.svg'
 
   'urn:gov:gsa:openidconnect:sp:server':
     redirect_uri: 'http://localhost:7654/'
     cert: 'saml_test_sp'
+    allow_on_prod_chef_env: 'false'
     friendly_name: 'Test SP'
 
 development:
@@ -62,6 +68,7 @@ development:
     fingerprint: '08:79:F5:B1:B8:CC:EC:8F:5C:2A:58:03:30:14:C9:E6:F1:67:78:F1:97:E8:3A:88:EB:8E:70:92:25:D2:2F:32'
     logo: 'generic.svg'
     agency: 'GSA'
+    allow_on_prod_chef_env: 'false'
     friendly_name: 'Awesome test SP'
 
   'urn:gov:gsa:SAML:2.0.profiles:sp:sso:localhost':
@@ -70,6 +77,7 @@ development:
     assertion_consumer_logout_service_url: 'http://localhost:4567/slo_logout'
     block_encryption: 'aes256-cbc'
     cert: 'sp_sinatra_demo'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -83,6 +91,7 @@ development:
     logo: '18f.svg'
     friendly_name: 'Micro-purchase Dev'
     return_to_sp_url: 'http://localhost:3000'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -96,6 +105,7 @@ development:
     friendly_name: '18F Test Service Provider'
     logo: 'generic.svg'
     return_to_sp_url: 'http://localhost:3003'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -105,6 +115,7 @@ development:
     sp_initiated_login_url: 'http://localhost:3001/users/auth/saml'
     block_encryption: 'aes256-cbc'
     cert: 'identity_dashboard_cert'
+    allow_on_prod_chef_env: 'false'
     attribute_bundle:
       - email
 
@@ -112,11 +123,13 @@ development:
     redirect_uri: 'gov.gsa.openidconnect.development://result'
     friendly_name: 'Example iOS App'
     agency: '18F'
+    allow_on_prod_chef_env: 'false'
     logo: 'generic.svg'
 
   'urn:gov:gsa:openidconnect:sp:sinatra':
     redirect_uri: 'http://localhost:9292/'
     cert: 'sp_sinatra_demo'
+    allow_on_prod_chef_env: 'false'
     friendly_name: 'Example Sinatra App'
 
 production:
