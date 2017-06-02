@@ -1,0 +1,31 @@
+- title t('titles.reactivate_account')
+
+h1.h3.mt0.mb2 = t('headings.account.reactivate')
+
+p.mb4 = t('instructions.reactivate_account.intro')
+
+h2.h4.pb1.border-bottom = t('instructions.reactivate_account.begin')
+
+h3.fs-20p.sans-serif.mt4 = t('instructions.reactivate_account.with_key')
+
+p.mb0 = t('instructions.reactivate_account.explanation')
+
+.scale-down
+  = render 'partials/personal_key/key', code: 'XXXX-XXXX-XXXX-XXXX'
+
+.block-center.center.col-10
+  .col-12.mb2
+    = link_to t('links.reactivate_account.with_key'), reactivate_account_path,
+      class: 'btn btn-primary block'
+  .col-12
+    = link_to t('links.reactivate_account.without_key'), verify_path,
+      class: 'btn btn-secondary block'
+/   = form_tag reset_password_path, method: :put, class: 'mb2' do
+/     = button_tag t('links.passwords.reset.with_key'), class: 'col-12 btn btn-primary',
+/       name: :personal_key, type: 'submit', value: 'true'
+/   = form_tag reset_password_path, method: :put do
+/     = button_tag t('links.passwords.reset.without_key'), type: 'submit',
+/       class: 'col-12 btn btn-secondary block password-reset',
+/       name: :personal_key, value: 'false'
+/ 
+/ = render 'reset_password/modal'

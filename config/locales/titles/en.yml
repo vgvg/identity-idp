@@ -17,6 +17,7 @@ en:
     account: Account
     reactivate_profile: Reactivate profile
     personal_key: Just in case
+    reactivate_account: Reactivate your account
     registrations:
       new: Sign up for a account
       start: Get started

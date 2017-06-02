@@ -13,10 +13,6 @@ class SessionDecorator
     'shared/nav_lite'
   end
 
-  def forgot_password_partial
-    'forgot_password/link'
-  end
-
   def registration_heading
     'sign_up/registrations/registration_heading'
   end

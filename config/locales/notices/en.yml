@@ -15,7 +15,7 @@ en:
       no_email_sent_explanation_start: Didn’t receive an email?
       resend_email_success: We sent another password reset email.
     password_changed: You changed your password.
-    password_reset: Great! You have your personal key. We'll ask for that in a minute.
+    password_reset: Great! You have your personal key.
     resend_confirmation_email:
       success: We sent another confirmation email.
     send_code:

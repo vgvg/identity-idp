@@ -95,8 +95,12 @@ Rails.application.routes.draw do
   get '/profile/reactivate', to: redirect('/account/reactivate')
   get '/profile/verify', to: redirect('/account/verify')
 
-  get '/reset_password' => 'reset_password#index', as: :reset_password
-  put '/reset_password' => 'reset_password#update'
+  get '/reactivate_account/start' => 'reactivate_account#index', as: :manage_reactivate_account
+  put '/reactivate_account' => 'reactivate_account#update'
+
+  get '/reset_password/personal_key' => 'users/verify_personal_key#new', as: :verify_personal_key
+  post '/reset_password/personal_key' => 'users/verify_personal_key#create',
+       as: :verify_personal_key_create
 
   post '/sign_up/create_password' => 'sign_up/passwords#create', as: :sign_up_create_password
   get '/sign_up/email/confirm' => 'sign_up/email_confirmations#create',
