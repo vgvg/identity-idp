@@ -7,6 +7,8 @@ addons:
     packages:
       - chromium-chromedriver
       - jq
+    sources:
+      - google-chrome
 cache:
   directories:
     - "travis_phantomjs"
