@@ -104,6 +104,7 @@ group :test do
   gem 'poltergeist'
   gem 'rack-test'
   gem 'rack_session_access'
+  gem 'selenium-webdriver'
   gem 'shoulda-matchers', '~> 3.0', require: false
   gem 'test_after_commit'
   gem 'timecop'

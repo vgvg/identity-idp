@@ -503,6 +503,7 @@ GEM
     ruby_dep (1.5.0)
     ruby_parser (3.8.4)
       sexp_processor (~> 4.1)
+    rubyzip (1.2.1)
     safe_yaml (1.0.4)
     safely_block (0.2.0)
       errbase
@@ -526,6 +527,9 @@ GEM
     secure_headers (3.6.5)
       useragent
     securecompare (1.0.0)
+    selenium-webdriver (3.4.4)
+      childprocess (~> 0.5)
+      rubyzip (~> 1.0)
     sexp_processor (4.8.0)
     shellany (0.0.1)
     shoulda-matchers (3.1.1)
@@ -726,6 +730,7 @@ DEPENDENCIES
   savon
   scrypt
   secure_headers (~> 3.0)
+  selenium-webdriver
   shoulda-matchers (~> 3.0)
   sidekiq
   simple_form
