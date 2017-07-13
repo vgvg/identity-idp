@@ -1,9 +1,11 @@
 require 'rails_helper'
-include Features::LocalizationHelper
 
 describe Verify::PhoneController do
+  include Features::LocalizationHelper
+
   let(:max_attempts) { Idv::Attempter.idv_max_attempts }
   let(:good_phone) { '+1 (555) 555-0000' }
+  let(:normalized_phone) { '5555550000' }
   let(:bad_phone) { '+1 (555) 555-5555' }
 
   describe 'before_actions' do
@@ -57,7 +59,7 @@ describe Verify::PhoneController do
       end
 
       it 'tracks form error and does not make a vendor API call' do
-        allow(Idv::PhoneValidator).to receive(:new)
+        expect(Idv::PhoneValidator).to_not receive(:new)
 
         put :create, idv_phone_form: { phone: '703' }
 
@@ -69,10 +71,9 @@ describe Verify::PhoneController do
         }
 
         expect(@analytics).to have_received(:track_event).with(
-          Analytics::IDV_PHONE_CONFIRMATION, result
+          Analytics::IDV_PHONE_CONFIRMATION_FORM, result
         )
-        expect(subject.idv_session.phone_confirmation).to eq false
-        expect(Idv::PhoneValidator).to_not have_received(:new)
+        expect(subject.idv_session.phone_confirmation).to be_falsy
       end
     end
 
@@ -91,7 +92,10 @@ describe Verify::PhoneController do
         result = { success: true, errors: {} }
 
         expect(@analytics).to have_received(:track_event).with(
-          Analytics::IDV_PHONE_CONFIRMATION, result
+          Analytics::IDV_PHONE_CONFIRMATION_FORM, result
+        )
+        expect(@analytics).to have_received(:track_event).with(
+          Analytics::IDV_PHONE_CONFIRMATION_VENDOR, result
         )
       end
 
@@ -111,7 +115,10 @@ describe Verify::PhoneController do
         expect(flash[:warning]).to match t('idv.modal.phone.heading')
         expect(flash[:warning]).to match t('idv.modal.attempts', count: max_attempts - 1)
         expect(@analytics).to have_received(:track_event).with(
-          Analytics::IDV_PHONE_CONFIRMATION, result
+          Analytics::IDV_PHONE_CONFIRMATION_FORM, success: true, errors: {}
+        )
+        expect(@analytics).to have_received(:track_event).with(
+          Analytics::IDV_PHONE_CONFIRMATION_VENDOR, result
         )
       end
 
@@ -125,7 +132,7 @@ describe Verify::PhoneController do
           expect(response).to redirect_to verify_review_path
 
           expected_params = {
-            phone: good_phone,
+            phone: normalized_phone,
             phone_confirmed_at: user.phone_confirmed_at,
           }
           expect(subject.idv_session.params).to eq expected_params
@@ -142,7 +149,7 @@ describe Verify::PhoneController do
           expect(response).to redirect_to verify_review_path
 
           expected_params = {
-            phone: good_phone,
+            phone: normalized_phone,
           }
           expect(subject.idv_session.params).to eq expected_params
         end
@@ -165,6 +172,19 @@ describe Verify::PhoneController do
           expect(user.idv_attempts).to eq(max_attempts - 1)
           expect(user.idv_attempted_at).to eq two_days_ago
         end
+      end
+
+      it 'passes the normalized phone to the background job' do
+        user = build(:user, phone: good_phone, phone_confirmed_at: Time.zone.now)
+        stub_verify_steps_one_and_two(user)
+
+        expect(SubmitIdvJob).to receive(:new).with(
+          vendor_validator_class: Idv::PhoneValidator,
+          idv_session: subject.idv_session,
+          vendor_params: normalized_phone
+        ).and_call_original
+
+        put :create, idv_phone_form: { phone: good_phone }
       end
     end
   end

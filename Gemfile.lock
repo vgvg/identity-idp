@@ -1,6 +1,6 @@
 GIT
   remote: git@github.com:18F/identity-equifax-api-client-gem.git
-  revision: 4308a502baf7b65e8b463ecafc2d428d530b4349
+  revision: 889aad815bda2ff2a41cd2b108e2afae7f50d8b8
   branch: master
   specs:
     equifax (1.0.0)
@@ -299,7 +299,7 @@ GEM
     httpi (2.4.2)
       rack
       socksify
-    i18n (0.8.4)
+    i18n (0.8.6)
     i18n-tasks (0.9.15)
       activesupport (>= 4.0.2)
       ast (>= 2.1.0)
@@ -375,6 +375,7 @@ GEM
     parser (2.4.0.0)
       ast (~> 2.2)
     pg (0.21.0)
+    phonelib (0.6.12)
     phony (2.15.44)
     phony_rails (0.14.6)
       activesupport (>= 3.0)
@@ -697,6 +698,7 @@ DEPENDENCIES
   newrelic_rpm
   overcommit
   pg
+  phonelib
   phony_rails
   poltergeist
   premailer-rails

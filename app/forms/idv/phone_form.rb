@@ -20,11 +20,10 @@ module Idv
 
       self.phone = formatted_phone
 
-      return false unless valid?
+      success = valid?
+      update_idv_params(formatted_phone) if success
 
-      update_idv_params(formatted_phone)
-
-      true
+      FormResponse.new(success: success, errors: errors.messages)
     end
 
     private
@@ -32,7 +31,8 @@ module Idv
     attr_writer :phone
 
     def update_idv_params(phone)
-      idv_params[:phone] = phone
+      normalized_phone = phone.gsub(/\D/, '')[1..-1]
+      idv_params[:phone] = normalized_phone
 
       return if phone != user.phone
 
