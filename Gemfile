@@ -95,6 +95,7 @@ end
 group :test do
   gem 'axe-matchers'
   gem 'capybara-screenshot', github: 'mattheworiordan/capybara-screenshot'
+  gem 'capybara-selenium'
   gem 'codeclimate-test-reporter', require: false
   gem 'coffee-script'
   gem 'database_cleaner'
@@ -104,7 +105,6 @@ group :test do
   gem 'poltergeist'
   gem 'rack-test'
   gem 'rack_session_access'
-  gem 'selenium-webdriver'
   gem 'shoulda-matchers', '~> 3.0', require: false
   gem 'test_after_commit'
   gem 'timecop'
