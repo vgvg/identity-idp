@@ -9,6 +9,7 @@ addons:
       - jq
     sources:
       - google-chrome
+      - chromium
 cache:
   directories:
     - "travis_phantomjs"
