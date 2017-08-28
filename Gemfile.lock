@@ -468,6 +468,7 @@ GEM
       thor (>= 0.18.1, < 2.0)
     rainbow (2.2.2)
       rake
+    raise-if-root (0.0.1)
     rake (12.1.0)
     randexp (0.1.7)
     rb-fsevent (0.9.8)
@@ -732,6 +733,7 @@ DEPENDENCIES
   rails-controller-testing
   rails-erd
   rails_layout
+  raise-if-root
   readthis
   redis-session-store!
   reek
