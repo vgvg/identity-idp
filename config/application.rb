@@ -7,6 +7,9 @@ APP_NAME = 'login.gov'.freeze
 
 module Upaya
   class Application < Rails::Application
+    s3_database_yml_path = Rails.root.join('config', 'database_s3.yml').to_s
+    paths['config/database'] = s3_database_yml_path if File.exist?(s3_database_yml_path)
+
     config.active_job.queue_adapter = :sidekiq
     config.autoload_paths << Rails.root.join('app', 'mailers', 'concerns')
     config.time_zone = 'UTC'
