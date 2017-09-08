@@ -5,8 +5,18 @@ require 'worker_health_checker'
 Sidekiq::Logging.logger.level = Logger::WARN
 Sidekiq::Logging.logger.formatter = SidekiqLoggerFormatter.new
 
+# cloud.gov redis compatibility
+# centralize this in redis initializer?
+if ENV['VCAP_SERVICES']
+  services = JSON.parse(ENV['VCAP_SERVICES'])
+  credentials = services['redis32'].first['credentials']
+  redis_url = "redis://:#{credentials['password']}@#{credentials['hostname']}:#{credentials['port']}"
+else
+	redis_url = Figaro.env.redis_url
+end
+
 redis_connection = proc do
-  EncryptedSidekiqRedis.new(url: Figaro.env.redis_url)
+  EncryptedSidekiqRedis.new(url: redis_url)
 end
 
 size = (Sidekiq.server? ? (Sidekiq.options[:concurrency] + 2) : 5)

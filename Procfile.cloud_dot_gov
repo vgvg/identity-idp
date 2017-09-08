@@ -1,0 +1,1 @@
+web: bundle exec rake cf:on_first_instance && bundle exec rails s -p $PORT -e $RAILS_ENV

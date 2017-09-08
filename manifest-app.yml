@@ -1,0 +1,12 @@
+applications:
+- name: login-idp-app
+  buildpack: https://github.com/cloudfoundry/multi-buildpack
+  services:
+  - postgres
+  - redis
+env:
+  BUNDLE_WITHOUT: development:deploy:test
+  RAILS_SERVE_STATIC_FILES: true
+  RAILS_ENV: production
+  RACK_ENV: production
+  

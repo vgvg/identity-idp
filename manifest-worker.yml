@@ -1,0 +1,13 @@
+applications:
+- name: login-idp-worker
+  buildpack: https://github.com/cloudfoundry/multi-buildpack
+  command: bundle exec sidekiq --config config/sidekiq.yml
+  health-check-type: none
+  no-route: true
+  services:
+  - postgres
+  - redis
+env:
+  BUNDLE_WITHOUT: development:deploy:test
+  RAILS_ENV: production
+  RACK_ENV: production

@@ -56,6 +56,7 @@ Vagrantfile
 /test
 /tmp/*
 /vendor/bundle
+/vendor/cache
 /node_modules
 
 # This is a hack to keep the files that are added to the repo and to prevent git from worrying about

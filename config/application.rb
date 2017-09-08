@@ -34,8 +34,13 @@ module Upaya
       event.payload.except(:params, :headers)
     end
 
-    require 'headers_filter'
-    config.middleware.insert_before 0, HeadersFilter
+    # Disables our headers filter when deployed to cloud.gov
+    #   WHY: config.force_ssl requires these headers to be present.
+    #        https://stackoverflow.com/a/21793954/399333
+    unless ENV['VCAP_APPLICATION']
+      require 'headers_filter'
+      config.middleware.insert_before 0, HeadersFilter
+    end
 
     config.middleware.insert_before 0, Rack::Cors do
       allow do

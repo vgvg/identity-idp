@@ -24,6 +24,26 @@ development:
 test:
   <<: *defaults
 
+# cloud.gov database compatibility
+<%
+  begin
+    services = JSON.parse(ENV['VCAP_SERVICES'])
+    credentials = services['aws-rds'].first['credentials']
+  rescue
+    credentials = {}
+  end
+%>
+
+<% if !credentials.empty? %>
+production:
+  adapter: postgresql
+  encoding: unicode
+  host: <%= credentials['host'] || 'localhost' %>
+  port: <%= credentials['port'] || '3306' %>
+  database: <%= credentials['db_name'] || '' %>
+  username: <%= credentials['username'] || '' %>
+  password: <%= credentials['password'] || '' %>
+<% else %>
 production:
   <<: *defaults
   database: <%= Figaro.env.database_name! %>
@@ -32,3 +52,4 @@ production:
   password: <%= Figaro.env.database_password! %>
   sslmode: 'verify-full'
   sslrootcert: '/usr/local/share/aws/rds-combined-ca-bundle.pem'
+<% end %>

@@ -194,6 +194,16 @@ $ RAILS_ASSET_HOST=localhost:3000 FEDERALIST_PATH=/site/user/repository rake spe
 
 This will output your site to `public/site/user/repository` for quick publishing to [Federalist](https://federalist-docs.18f.gov/pages/using-federalist/). To test compatibility, run `simplehttpserver` from the app's `public` folder and visit `http://localhost:8000/<FEDERALIST PATH>/user_flows` in your browser.
 
+### Deploying to cloud.gov
+
+To deploy to cloud.gov, you will need >= v6.32 of the [CloudFoundry CLI](https://cloud.gov/docs/getting-started/setup/#set-up-the-command-line). For more information about cloud.gov, [check out the beautiful docs](https://cloud.gov/docs/).
+
+To configure your instances for cloud.gov, simply add a `cloud.gov` entry to your `config/application.yml` file and execute `bin/push_cloud_dot_gov`. The script will create the requisite services, set the ENV configuration, and create your web and worker instances.
+
+#### Caveats
+
+Some parts of login.gov require a separate AWS (Amazon Web Services) account in order to work in tandem with cloud.gov, such as KMS and Redshift. This is a work-in-progress.
+
 ### Load testing
 
 We provide some [Locust.io] Python scripts you can run to test how the
