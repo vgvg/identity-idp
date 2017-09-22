@@ -13,7 +13,7 @@ GIT
 
 GIT
   remote: https://github.com/18F/identity-hostdata.git
-  revision: 4c6af40ec72917a81d7f6efa5ecafd18d085e55f
+  revision: 8fa4473ad17fc5f74bd82a2cc8a64cf27a54a60f
   branch: margolis-s3-config
   specs:
     identity-hostdata (0.3.0)
