@@ -4,8 +4,8 @@ root = File.expand_path('../../', __FILE__)
 
 LoginGov::Hostdata.in_datacenter do |hostdata|
   hostdata.s3.download_configs(
-    '/%<env>s/v1/idp/application.yml' => File.join(root, 'config/application_s3.yml'),
-    '/%<env>s/v1/idp/database.yml'    => File.join(root, 'config/database_s3.yml')
+    '/%<env>s/idp/v1/application.yml' => File.join(root, 'config/application_s3.yml'),
+    '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
   )
 end
 
