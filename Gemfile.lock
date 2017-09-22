@@ -13,10 +13,11 @@ GIT
 
 GIT
   remote: https://github.com/18F/identity-hostdata.git
-  revision: b439d933afd8b1be0c89b3d76bb76ac73c0797cf
-  branch: master
+  revision: 6c6412916d4cbeccbefb532e1c210be02194187a
+  branch: margolis-s3-config
   specs:
-    identity-hostdata (0.2.0)
+    identity-hostdata (0.3.0)
+      aws-sdk-core (~> 2.10.23)
 
 GIT
   remote: https://github.com/18F/identity-proofer-gem.git
