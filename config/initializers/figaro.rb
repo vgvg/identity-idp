@@ -1,7 +1,13 @@
 require Rails.root.join('lib', 'config_validator.rb')
 
-s3_application_yml_path = Rails.root.join('config', 'application_s3.yml').to_s
-Figaro.application.path = s3_application_yml_path if File.exist?(s3_application_yml_path)
+LoginGov::Hostdata.in_datacenter do
+  s3_application_yml_path = Rails.root.join('config', 'application_s3.yml').to_s
+  if File.exist?(s3_application_yml_path)
+    Figaro.application.path = s3_application_yml_path
+  else
+    abort "Expected config file at #{s3_application_yml_path}"
+  end
+end
 
 Figaro.require_keys(
   'attribute_cost',
