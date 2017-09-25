@@ -13,8 +13,8 @@ GIT
 
 GIT
   remote: https://github.com/18F/identity-hostdata.git
-  revision: 02a88c7db2080f174bd98f9c0b6471727e475a03
-  branch: margolis-s3-config
+  revision: bbb21f11254feda46b3ce7d27effef67ff021631
+  branch: master
   specs:
     identity-hostdata (0.3.0)
       aws-sdk-core (~> 2.10.23)
