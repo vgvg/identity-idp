@@ -11,7 +11,20 @@ logger.progname = 'script/activate'
 root = File.expand_path('../../', __FILE__)
 logger.info "app root: #{root}"
 
+env_yaml_path = File.join(root, 'config/application_s3_env.yml')
+
 LoginGov::Hostdata.s3(logger: logger).download_configs(
-  '/%<env>s/idp/v1/application.yml' => File.join(root, 'config/application_s3.yml'),
+  '/%<env>s/idp/v1/application.yml' => env_yaml_path,
   '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
 )
+
+example_application_yml_path = File.join(root, 'config/application.yml.example')
+
+application_config = {
+  production: YAML.load_file(example_application_yml_path).fetch('production').
+    merge(YAML.load_file(env_yaml_path).fetch('production'))
+}
+
+result_yaml_path = File.join(root, 'config/application_s3.yml')
+
+File.open(result_yaml_path, 'w') { |file| file.puts YAML.dump(application_config) }
