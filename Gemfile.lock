@@ -13,7 +13,7 @@ GIT
 
 GIT
   remote: https://github.com/18F/identity-hostdata.git
-  revision: 8fa4473ad17fc5f74bd82a2cc8a64cf27a54a60f
+  revision: 02a88c7db2080f174bd98f9c0b6471727e475a03
   branch: margolis-s3-config
   specs:
     identity-hostdata (0.3.0)
@@ -128,10 +128,10 @@ GEM
     american_date (1.1.1)
     arel (8.0.0)
     ast (2.3.0)
-    aws-sdk-core (2.10.23)
+    aws-sdk-core (2.10.52)
       aws-sigv4 (~> 1.0)
       jmespath (~> 1.0)
-    aws-sigv4 (1.0.1)
+    aws-sigv4 (1.0.2)
     axe-matchers (1.3.4)
       dumb_delegator (~> 0.8)
       virtus (~> 1.0)

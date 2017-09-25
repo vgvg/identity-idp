@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+require 'bundler'
+Bundler.setup(:default, :production)
+
+require 'login_gov/hostdata'
+require 'logger'
+
+logger = Logger.new(STDOUT)
+logger.progname = 'script/activate'
+
+root = File.expand_path('../../', __FILE__)
+logger.info "app root: #{root}"
+
+LoginGov::Hostdata.s3(logger: logger).download_configs(
+  '/%<env>s/idp/v1/application.yml' => File.join(root, 'config/application_s3.yml'),
+  '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
+)
