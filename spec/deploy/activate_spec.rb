@@ -45,14 +45,6 @@ RSpec.describe 'deploy/activate' do
         File.open('/etc/login.gov/info/env', 'w') { |file| file.puts 'int' }
       end
 
-      let(:application_yml_example) do
-        <<~YAML
-          recovery_code_length: '4',
-          production:
-            usps_confirmation_max_days: '10'
-        YAML
-      end
-
       let(:application_yml) do
         <<~YAML
           production:
