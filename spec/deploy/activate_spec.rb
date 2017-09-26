@@ -38,7 +38,9 @@ RSpec.describe 'deploy/activate' do
 
         bucket = 'login-gov.app-secrets.12345-us-west-1'
 
-        s3_client.put_object(bucket: bucket, key: '/int/idp/v1/application.yml', body: application_yml)
+        s3_client.put_object(
+          bucket: bucket, key: '/int/idp/v1/application.yml', body: application_yml
+        )
         s3_client.put_object(bucket: bucket, key: '/int/idp/v1/database.yml', body: database_yml)
 
         FileUtils.mkdir_p('/etc/login.gov/info')

@@ -14,33 +14,45 @@ module Deploy
       @s3_client = s3_client
     end
 
+    # rubocop:disable Metrics/AbcSize
     def run
-      root = File.expand_path('../../', __FILE__)
       logger.info "app root: #{root}"
-
-      env_yaml_path = File.join(root, 'config/application_s3_env.yml')
 
       LoginGov::Hostdata.s3(logger: logger, s3_client: s3_client).download_configs(
         '/%<env>s/idp/v1/application.yml' => env_yaml_path,
         '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
       )
 
-      example_application_yml_path = File.join(root, 'config/application.yml.example')
-      application_config = YAML.load_file(example_application_yml_path).
-        merge(YAML.load_file(env_yaml_path).slice('production'))
+      application_config = YAML.load_file(example_application_yaml_path).merge(
+        YAML.load_file(env_yaml_path).slice('production')
+      )
 
-      result_yaml_path = File.join(root, 'config/application_s3.yml')
       File.open(result_yaml_path, 'w') { |file| file.puts YAML.dump(application_config) }
     end
+    # rubocop:enable Metrics/AbcSize
 
     def default_logger
       logger = Logger.new(STDOUT)
       logger.progname = 'script/activate'
       logger
     end
+
+    def root
+      File.expand_path('../../', __FILE__)
+    end
+
+    def env_yaml_path
+      File.join(root, 'config/application_s3_env.yml')
+    end
+
+    def example_application_yaml_path
+      File.join(root, 'config/application.yml.example')
+    end
+
+    def result_yaml_path
+      File.join(root, 'config/application_s3.yml')
+    end
   end
 end
 
-if $PROGRAM_NAME == __FILE__
-  Deploy::Activate.new.run
-end
+Deploy::Activate.new.run if $PROGRAM_NAME == __FILE__
