@@ -2,6 +2,7 @@
 require 'bundler'
 Bundler.setup(:default, :production)
 
+require 'active_support/core_ext/hash/deep_merge'
 require 'logger'
 require 'login_gov/hostdata'
 
@@ -23,9 +24,8 @@ module Deploy
         '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
       )
 
-      application_config = YAML.load_file(example_application_yaml_path).merge(
-        YAML.load_file(env_yaml_path).slice('production')
-      )
+      application_config = YAML.load_file(example_application_yaml_path).
+                           deep_merge(YAML.load_file(env_yaml_path))
 
       File.open(result_yaml_path, 'w') { |file| file.puts YAML.dump(application_config) }
     end

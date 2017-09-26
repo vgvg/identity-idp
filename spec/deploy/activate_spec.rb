@@ -72,8 +72,12 @@ RSpec.describe 'deploy/activate' do
 
         combined_application_yml = YAML.load_file(File.join(config_dir, 'application_s3.yml'))
 
+        # top-level key from application.yml.example
         expect(combined_application_yml['recovery_code_length']).to eq('4')
+        # overridden production key from s3
         expect(combined_application_yml['production']['usps_confirmation_max_days']).to eq('5')
+        # production key from applicaiton.yml.example, not overwritten
+        expect(combined_application_yml['production']['lockout_period_in_minutes']).to eq('10')
       end
     end
 
