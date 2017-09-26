@@ -1,5 +1,4 @@
 require 'spec_helper'
-require 'fakefs/safe'
 require 'fakefs/spec_helpers'
 require 'login_gov/hostdata/fake_s3_client'
 
