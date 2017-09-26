@@ -2,29 +2,45 @@
 require 'bundler'
 Bundler.setup(:default, :production)
 
-require 'login_gov/hostdata'
 require 'logger'
+require 'login_gov/hostdata'
 
-logger = Logger.new(STDOUT)
-logger.progname = 'script/activate'
+module Deploy
+  class Activate
+    attr_reader :logger, :s3_client
 
-root = File.expand_path('../../', __FILE__)
-logger.info "app root: #{root}"
+    def initialize(logger: default_logger, s3_client: nil)
+      @logger = logger
+      @s3_client = s3_client
+    end
 
-env_yaml_path = File.join(root, 'config/application_s3_env.yml')
+    def run
+      root = File.expand_path('../../', __FILE__)
+      logger.info "app root: #{root}"
 
-LoginGov::Hostdata.s3(logger: logger).download_configs(
-  '/%<env>s/idp/v1/application.yml' => env_yaml_path,
-  '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
-)
+      env_yaml_path = File.join(root, 'config/application_s3_env.yml')
 
-example_application_yml_path = File.join(root, 'config/application.yml.example')
+      LoginGov::Hostdata.s3(logger: logger, s3_client: s3_client).download_configs(
+        '/%<env>s/idp/v1/application.yml' => env_yaml_path,
+        '/%<env>s/idp/v1/database.yml'    => File.join(root, 'config/database_s3.yml')
+      )
 
-application_config = {
-  production: YAML.load_file(example_application_yml_path).fetch('production').
-    merge(YAML.load_file(env_yaml_path).fetch('production'))
-}
+      example_application_yml_path = File.join(root, 'config/application.yml.example')
+      application_config = YAML.load_file(example_application_yml_path).
+        merge(YAML.load_file(env_yaml_path).slice('production'))
 
-result_yaml_path = File.join(root, 'config/application_s3.yml')
+      result_yaml_path = File.join(root, 'config/application_s3.yml')
+      File.open(result_yaml_path, 'w') { |file| file.puts YAML.dump(application_config) }
+    end
 
-File.open(result_yaml_path, 'w') { |file| file.puts YAML.dump(application_config) }
+    def default_logger
+      logger = Logger.new(STDOUT)
+      logger.progname = 'script/activate'
+      logger
+    end
+  end
+end
+
+if $PROGRAM_NAME == __FILE__
+  Deploy::Activate.new.run
+end

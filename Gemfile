@@ -101,6 +101,7 @@ group :test do
   gem 'database_cleaner'
   gem 'email_spec'
   gem 'factory_girl_rails'
+  gem 'fakefs'
   gem 'faker'
   gem 'poltergeist'
   gem 'rack-test'
