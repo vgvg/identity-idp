@@ -63,14 +63,14 @@ RSpec.describe 'deploy/activate' do
       it 'downloads configs from s3' do
         script.run
 
-        expect(File.exist?(File.join(config_dir, 'application_s3.yml'))).to eq(true)
-        expect(File.read(File.join(config_dir, 'database_s3.yml'))).to eq(database_yml)
+        expect(File.exist?(File.join(config_dir, 'application.yml'))).to eq(true)
+        expect(File.read(File.join(config_dir, 'database.yml'))).to eq(database_yml)
       end
 
       it 'merges the application.yml from s3 over the application.yml.example' do
         script.run
 
-        combined_application_yml = YAML.load_file(File.join(config_dir, 'application_s3.yml'))
+        combined_application_yml = YAML.load_file(File.join(config_dir, 'application.yml'))
 
         # top-level key from application.yml.example
         expect(combined_application_yml['recovery_code_length']).to eq('4')

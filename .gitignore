@@ -57,8 +57,6 @@ Vagrantfile
 /tmp/*
 /vendor/bundle
 /node_modules
-/config/application_s3.yml
-/config/database_s3.yml
 
 # This is a hack to keep the files that are added to the repo and to prevent git from worrying about
 # new (transient) files that may be created in those dirs.
