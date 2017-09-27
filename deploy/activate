@@ -5,6 +5,7 @@ Bundler.setup(:default, :production)
 require 'active_support/core_ext/hash/deep_merge'
 require 'logger'
 require 'login_gov/hostdata'
+require 'yaml'
 
 module Deploy
   class Activate
