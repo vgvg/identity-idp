@@ -35,7 +35,7 @@ Dir.chdir APP_ROOT do
   run 'cp keys/equifax_rsa.pub.example keys/equifax_rsa.pub'
   run 'cp certs/saml.crt.example certs/saml.crt'
 
-  # TODO: find a way to enable.
+  # TODO: this needs addressing once we are using real secrets.
   #.      the gpg key import is disabled because it will only be
   #       used when we integrate with Equifax. this step can also take a
   #       while, which may exceed the default 60-second CloudFoundry timeout

@@ -31,6 +31,7 @@ gem 'phonelib'
 gem 'phony_rails'
 gem 'premailer-rails'
 gem 'proofer', github: '18F/identity-proofer-gem', branch: 'master'
+gem 'puma'
 gem 'rack-cors', require: 'rack/cors'
 gem 'rack-headers_filter'
 gem 'rack-timeout'
@@ -90,7 +91,6 @@ group :development, :test do
   gem 'rspec-rails', '~> 3.5.2'
   gem 'slim_lint'
   gem 'teaspoon-mocha'
-  gem 'thin'
 end
 
 group :test do

@@ -2,7 +2,7 @@
 require 'pathname'
 require 'yaml'
 
-APP_NAME = 'login-dot-gov'.freeze
+APP_NAME = 'login-dot-gov-test'.freeze
 WORKER_NAME = APP_NAME + '-worker'
 
 # path to your application root.
