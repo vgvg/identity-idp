@@ -61,7 +61,7 @@ describe Verify::ReviewController do
       before_action :confirm_idv_steps_complete
 
       def show
-        render text: 'Hello'
+        render plain: 'Hello'
       end
     end
 
@@ -105,7 +105,7 @@ describe Verify::ReviewController do
       before_action :confirm_idv_phone_confirmed
 
       def show
-        render text: 'Hello'
+        render plain: 'Hello'
       end
     end
 
@@ -163,7 +163,7 @@ describe Verify::ReviewController do
       before_action :confirm_current_password
 
       def show
-        render text: 'Hello'
+        render plain: 'Hello'
       end
     end
 
@@ -180,7 +180,7 @@ describe Verify::ReviewController do
 
     context 'user does not provide password' do
       it 'redirects to new' do
-        post :show, user: { password: '' }
+        post :show, params: { user: { password: '' } }
 
         expect(flash[:error]).to eq t('idv.errors.incorrect_password')
         expect(response).to redirect_to verify_review_path
@@ -189,7 +189,7 @@ describe Verify::ReviewController do
 
     context 'user provides wrong password' do
       it 'redirects to new' do
-        post :show, user: { password: 'wrong' }
+        post :show, params: { user: { password: 'wrong' } }
 
         expect(flash[:error]).to eq t('idv.errors.incorrect_password')
         expect(response).to redirect_to verify_review_path
@@ -198,7 +198,7 @@ describe Verify::ReviewController do
 
     context 'user provides correct password' do
       it 'allows request to proceed' do
-        post :show, user: { password: ControllerHelper::VALID_PASSWORD }
+        post :show, params: { user: { password: ControllerHelper::VALID_PASSWORD } }
 
         expect(response.body).to eq 'Hello'
       end
@@ -293,7 +293,7 @@ describe Verify::ReviewController do
       end
 
       it 'redirects to original path' do
-        put :create, user: { password: 'wrong' }
+        put :create, params: { user: { password: 'wrong' } }
 
         expect(response).to redirect_to verify_review_path
       end
@@ -308,14 +308,14 @@ describe Verify::ReviewController do
       end
 
       it 'redirects to confirmation path' do
-        put :create, user: { password: ControllerHelper::VALID_PASSWORD }
+        put :create, params: { user: { password: ControllerHelper::VALID_PASSWORD } }
 
         expect(@analytics).to have_received(:track_event).with(Analytics::IDV_REVIEW_COMPLETE)
         expect(response).to redirect_to verify_confirmations_path
       end
 
       it 'creates Profile with applicant and normalized_applicant attributes' do
-        put :create, user: { password: ControllerHelper::VALID_PASSWORD }
+        put :create, params: { user: { password: ControllerHelper::VALID_PASSWORD } }
 
         profile = idv_session.profile
         uak = user.unlock_user_access_key(ControllerHelper::VALID_PASSWORD)
@@ -327,6 +327,46 @@ describe Verify::ReviewController do
         expect(idv_session.applicant[:first_name]).to eq 'Jose'
         expect(pii.first_name.raw).to eq 'José'
         expect(pii.first_name.norm).to eq 'JOSE'
+      end
+
+      context 'user picked phone confirmation' do
+        before do
+          idv_session.address_verification_mechanism = 'phone'
+          idv_session.vendor_phone_confirmation = true
+          idv_session.user_phone_confirmation = true
+        end
+
+        it 'activates profile' do
+          put :create, params: { user: { password: ControllerHelper::VALID_PASSWORD } }
+
+          profile = idv_session.profile
+          profile.reload
+
+          expect(profile).to be_active
+        end
+
+        it 'creates an `account_verified` event once per confirmation' do
+          event_creator = instance_double(CreateVerifiedAccountEvent)
+          expect(CreateVerifiedAccountEvent).to receive(:new).and_return(event_creator)
+          expect(event_creator).to receive(:call)
+
+          put :create, params: { user: { password: ControllerHelper::VALID_PASSWORD } }
+        end
+      end
+
+      context 'user picked USPS confirmation' do
+        before do
+          idv_session.address_verification_mechanism = 'usps'
+        end
+
+        it 'leaves profile deactivated' do
+          put :create, params: { user: { password: ControllerHelper::VALID_PASSWORD } }
+
+          profile = idv_session.profile
+          profile.reload
+
+          expect(profile).to_not be_active
+        end
       end
     end
   end

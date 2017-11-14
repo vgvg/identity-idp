@@ -2,13 +2,14 @@
 es:
   devise:
     confirmations:
-      already_confirmed: Su email ha sido confirmado. %{acción}
+      already_confirmed: Su email ha sido confirmado. %{action}
       confirmed: Usted ha confirmado su email.
       confirmed_but_must_set_password: Usted ha confirmado su email.
       send_instructions: En pocos minutos recibirá un email con instrucciones para
         confirmar el uso de su email.
       send_paranoid_instructions: En pocos minutos recibirá un email con instrucciones
         para confirmar el uso de su email.
+      sign_in: Inicie la sesión de nuevo.
     failure:
       already_authenticated: ''
       inactive: Su cuenta aún no está activada.

@@ -1,3 +1,4 @@
+# Update ServiceProvider table by pulling from the Dashboard app API (lower environments only)
 class ServiceProviderUpdater
   PROTECTED_ATTRIBUTES = %i[
     created_at
@@ -23,7 +24,7 @@ class ServiceProviderUpdater
     if service_provider['active'] == true
       create_or_update_service_provider(issuer, service_provider)
     else
-      ServiceProvider.destroy_all(issuer: issuer, native: false)
+      ServiceProvider.where(issuer: issuer, native: false).destroy_all
     end
   end
 

@@ -10,11 +10,12 @@ class ApplicationController < ActionController::Base
   protect_from_forgery with: :exception
 
   rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_auth_token
+  rescue_from ActionController::UnknownFormat, with: :render_not_found
 
   helper_method :decorated_session, :reauthn?, :user_fully_authenticated?
 
   prepend_before_action :session_expires_at
-  before_action :set_locale
+  prepend_before_action :set_locale
   before_action :disable_caching
 
   def session_expires_at
@@ -34,7 +35,7 @@ class ApplicationController < ActionController::Base
   attr_writer :analytics
 
   def analytics
-    @analytics ||= Analytics.new(analytics_user, request)
+    @analytics ||= Analytics.new(user: analytics_user, request: request, sp: current_sp&.issuer)
   end
 
   def analytics_user
@@ -55,7 +56,7 @@ class ApplicationController < ActionController::Base
   end
 
   def default_url_options
-    { locale: locale_url_param }
+    { locale: locale_url_param, host: Figaro.env.domain_name }
   end
 
   private
@@ -95,22 +96,24 @@ class ApplicationController < ActionController::Base
   end
 
   def after_sign_in_path_for(user)
-    stored_location_for(user) || sp_session[:request_url] || signed_in_path
+    stored_location_for(user) || sp_session[:request_url] || signed_in_url
   end
 
-  def signed_in_path
-    user_fully_authenticated? ? account_or_verify_profile_path : user_two_factor_authentication_path
+  def signed_in_url
+    user_fully_authenticated? ? account_or_verify_profile_url : user_two_factor_authentication_url
   end
 
   def reauthn_param
     params[:reauthn]
   end
 
-  def invalid_auth_token
+  def invalid_auth_token(exception)
     analytics.track_event(Analytics::INVALID_AUTHENTICITY_TOKEN)
     sign_out
     flash[:error] = t('errors.invalid_authenticity_token')
     redirect_to root_url
+
+    ExceptionNotifier.notify_exception(exception, env: request.env)
   end
 
   def user_fully_authenticated?
@@ -133,11 +136,11 @@ class ApplicationController < ActionController::Base
   end
 
   def prompt_to_set_up_2fa
-    redirect_to phone_setup_path
+    redirect_to phone_setup_url
   end
 
   def prompt_to_enter_otp
-    redirect_to user_two_factor_authentication_path
+    redirect_to user_two_factor_authentication_url
   end
 
   def skip_session_expiration
@@ -150,5 +153,9 @@ class ApplicationController < ActionController::Base
 
   def sp_session
     session.fetch(:sp, {})
+  end
+
+  def render_not_found
+    render template: 'pages/page_not_found', layout: false, status: 404, formats: :html
   end
 end

@@ -9,6 +9,7 @@ fr:
         instructions pour confirmer votre adresse courriel.
       send_paranoid_instructions: Vous recevrez dans quelques instants un courriel
         avec des instructions pour confirmer votre adresse courriel.
+      sign_in: Veuillez vous connecter de nouveau.
     failure:
       already_authenticated: ''
       inactive: Votre compte n'est pas encore activé.
@@ -114,7 +115,8 @@ fr:
       max_otp_login_attempts_reached: Votre compte est temporairement verrouillé,
         car vous avez entré le code de sécurité à utilisation unique de façon erronée
         à de trop nombreuses reprises.
-      max_otp_requests_reached: NOT TRANSLATED YET
+      max_otp_requests_reached: Votre compte est temporairement verrouillé car vous
+        avez demandé un code de sécurité à trop de reprises.
       max_personal_key_login_attempts_reached: Votre compte est temporairement verrouillé,
         car vous avez entré le code de sécurité à utilisation unique de façon erronée
         à de trop nombreuses reprises.

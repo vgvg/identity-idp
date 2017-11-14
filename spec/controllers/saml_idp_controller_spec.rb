@@ -29,23 +29,25 @@ describe SamlIdpController do
         )
         sign_in user
 
-        post :logout, SAMLResponse: 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4' \
-                                    '8c2FtbDJwOkxvZ291dFJlc3BvbnNlIHhtbG5zOnNhbWwycD0idX' \
-                                    'JuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBEZ' \
-                                    'XN0aW5hdGlvbj0iaHR0cHM6Ly9teWFjY291bnQudXNjaXMuZGhz' \
-                                    'Lmdvdi9hcGkvc2FtbC9sb2dvdXQiIElEPSJhMzZkYWloNWNqYmo' \
-                                    'zMWI5NDYwZGJiajNqZDQ2N2I0IiBJblJlc3BvbnNlVG89Il81Zj' \
-                                    'dlYjU3MC01YjQ3LTRhMzAtYjUzNi0yY2YyOThhY2NmNmYiIElzc' \
-                                    '3VlSW5zdGFudD0iMjAxNS0xMi0wMlQxNToyNzo0OS4zNzFaIiBW' \
-                                    'ZXJzaW9uPSIyLjAiPjxzYW1sMjpJc3N1ZXIgeG1sbnM6c2FtbDI' \
-                                    '9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphc3NlcnRpb2' \
-                                    '4iPmV4dGVybmFsYXBwX3ByXzMwYTwvc2FtbDI6SXNzdWVyPjxzY' \
-                                    'W1sMnA6U3RhdHVzPjxzYW1sMnA6U3RhdHVzQ29kZSBWYWx1ZT0i' \
-                                    'dXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnN0YXR1czpVbmt' \
-                                    'ub3duUHJpbmNpcGFsIi8+PHNhbWwycDpTdGF0dXNNZXNzYWdlPk' \
-                                    '5vIHVzZXIgaXMgbG9nZ2VkIGluPC9zYW1sMnA6U3RhdHVzTWVzc' \
-                                    '2FnZT48L3NhbWwycDpTdGF0dXM+PC9zYW1sMnA6TG9nb3V0UmVz' \
-                                        'cG9uc2U+'
+        post :logout, params: {
+          SAMLResponse: 'PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiPz4' \
+                        '8c2FtbDJwOkxvZ291dFJlc3BvbnNlIHhtbG5zOnNhbWwycD0idX' \
+                        'JuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnByb3RvY29sIiBEZ' \
+                        'XN0aW5hdGlvbj0iaHR0cHM6Ly9teWFjY291bnQudXNjaXMuZGhz' \
+                        'Lmdvdi9hcGkvc2FtbC9sb2dvdXQiIElEPSJhMzZkYWloNWNqYmo' \
+                        'zMWI5NDYwZGJiajNqZDQ2N2I0IiBJblJlc3BvbnNlVG89Il81Zj' \
+                        'dlYjU3MC01YjQ3LTRhMzAtYjUzNi0yY2YyOThhY2NmNmYiIElzc' \
+                        '3VlSW5zdGFudD0iMjAxNS0xMi0wMlQxNToyNzo0OS4zNzFaIiBW' \
+                        'ZXJzaW9uPSIyLjAiPjxzYW1sMjpJc3N1ZXIgeG1sbnM6c2FtbDI' \
+                        '9InVybjpvYXNpczpuYW1lczp0YzpTQU1MOjIuMDphc3NlcnRpb2' \
+                        '4iPmV4dGVybmFsYXBwX3ByXzMwYTwvc2FtbDI6SXNzdWVyPjxzY' \
+                        'W1sMnA6U3RhdHVzPjxzYW1sMnA6U3RhdHVzQ29kZSBWYWx1ZT0i' \
+                        'dXJuOm9hc2lzOm5hbWVzOnRjOlNBTUw6Mi4wOnN0YXR1czpVbmt' \
+                        'ub3duUHJpbmNpcGFsIi8+PHNhbWwycDpTdGF0dXNNZXNzYWdlPk' \
+                        '5vIHVzZXIgaXMgbG9nZ2VkIGluPC9zYW1sMnA6U3RhdHVzTWVzc' \
+                        '2FnZT48L3NhbWwycDpTdGF0dXM+PC9zYW1sMnA6TG9nb3V0UmVz' \
+                        'cG9uc2U+',
+        }
         expect(response).to redirect_to root_url
       end
     end
@@ -188,14 +190,15 @@ describe SamlIdpController do
     end
 
     context 'authn_context is invalid' do
-      it 'renders nothing with a 401 error' do
+      it 'renders an error page' do
         stub_analytics
         allow(@analytics).to receive(:track_event)
 
         saml_get_auth(invalid_authn_context_settings)
 
-        expect(response.status).to eq(401)
-        expect(response.body).to be_empty
+        expect(controller).to render_template('saml_idp/auth/error')
+        expect(response.status).to eq(400)
+        expect(response.body).to include(t('errors.messages.unauthorized_authn_context'))
 
         analytics_hash = {
           success: false,
@@ -234,7 +237,7 @@ describe SamlIdpController do
     end
 
     context 'service provider is invalid' do
-      it 'responds with a 401 Unauthorized error' do
+      it 'responds with an error page' do
         user = create(:user, :signed_up)
 
         stub_analytics
@@ -242,7 +245,9 @@ describe SamlIdpController do
 
         generate_saml_response(user, invalid_service_provider_settings)
 
-        expect(response.status).to eq(401)
+        expect(controller).to render_template('saml_idp/auth/error')
+        expect(response.status).to eq(400)
+        expect(response.body).to include(t('errors.messages.unauthorized_service_provider'))
 
         analytics_hash = {
           success: false,
@@ -257,7 +262,7 @@ describe SamlIdpController do
     end
 
     context 'both service provider and authn_context are invalid' do
-      it 'responds with a 401 Unauthorized error' do
+      it 'responds with an error page' do
         user = create(:user, :signed_up)
 
         stub_analytics
@@ -265,7 +270,10 @@ describe SamlIdpController do
 
         generate_saml_response(user, invalid_service_provider_and_authn_context_settings)
 
-        expect(response.status).to eq(401)
+        expect(controller).to render_template('saml_idp/auth/error')
+        expect(response.status).to eq(400)
+        expect(response.body).to include(t('errors.messages.unauthorized_authn_context'))
+        expect(response.body).to include(t('errors.messages.unauthorized_service_provider'))
 
         analytics_hash = {
           success: false,
@@ -309,6 +317,64 @@ describe SamlIdpController do
         it 'does not delete SP metadata from session' do
           expect(session.key?(:sp)).to eq(true)
         end
+      end
+    end
+
+    context 'service provider uses email NameID format and is allowed to use email' do
+      let(:user) { create(:user, :signed_up) }
+
+      before do
+        generate_saml_response(user, email_nameid_saml_settings_for_allowed_issuer)
+      end
+
+      # Testing the <saml:Subject> element when the SP is configured to use a
+      # NameID format of emailAddress rather than the default persistent UUID.
+      context 'Subject' do
+        let(:subject) { xmldoc.subject_nodeset[0] }
+
+        it 'has a saml:Subject element' do
+          expect(subject).to_not be_nil
+        end
+
+        context 'NameID' do
+          let(:name_id) { subject.at('//ds:NameID', ds: Saml::XML::Namespaces::ASSERTION) }
+
+          it 'has a saml:NameID element' do
+            expect(name_id).to_not be_nil
+          end
+
+          it 'has a format attribute defining the NameID to be email' do
+            expect(name_id.attributes['Format'].value).
+              to eq('urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress')
+          end
+
+          it 'has NameID value of the email address of the user making the AuthN Request' do
+            expect(name_id.children.first.to_s).to eq(user.email)
+          end
+        end
+      end
+    end
+
+    context 'service provider uses email NameID format but is not allowed to use email' do
+      it 'returns an error' do
+        stub_analytics
+        allow(@analytics).to receive(:track_event)
+
+        saml_get_auth(email_nameid_saml_settings_for_disallowed_issuer)
+
+        expect(controller).to render_template('saml_idp/auth/error')
+        expect(response.status).to eq(400)
+        expect(response.body).to include(t('errors.messages.unauthorized_nameid_format'))
+
+        analytics_hash = {
+          success: false,
+          errors: { nameid_format: [t('errors.messages.unauthorized_nameid_format')] },
+          authn_context: 'http://idmanagement.gov/ns/assurance/loa/1',
+          service_provider: 'http://localhost:3000',
+        }
+
+        expect(@analytics).to have_received(:track_event).
+          with(Analytics::SAML_AUTH, analytics_hash)
       end
     end
 
@@ -829,10 +895,10 @@ describe SamlIdpController do
       expect(subject).to have_actions(
         :before,
         :disable_caching,
-        [:validate_saml_request, only: :auth],
-        [:validate_service_provider_and_authn_context, only: :auth],
-        [:store_saml_request, only: :auth],
-        [:add_sp_metadata_to_session, only: :auth]
+        :validate_saml_request,
+        :validate_service_provider_and_authn_context,
+        :store_saml_request,
+        :add_sp_metadata_to_session
       )
     end
   end

@@ -1,17 +1,30 @@
 module Idv
   class ProfileMaker
-    attr_reader :pii_attributes, :profile
+    attr_reader :pii_attributes
 
     def initialize(applicant:, user:, normalized_applicant:, vendor:, phone_confirmed:)
-      @profile = Profile.new(user: user, deactivation_reason: :verification_pending)
-      @pii_attributes = pii_from_applicant(applicant, normalized_applicant)
+      self.pii_attributes = pii_from_applicant(applicant, normalized_applicant)
+      self.user = user
+      self.vendor = vendor
+      self.phone_confirmed = phone_confirmed
+    end
+
+    def save_profile
+      profile = Profile.new(
+        deactivation_reason: :verification_pending,
+        phone_confirmed: phone_confirmed,
+        user: user,
+        vendor: vendor
+      )
       profile.encrypt_pii(user.user_access_key, pii_attributes)
-      profile.vendor = vendor
-      profile.phone_confirmed = phone_confirmed
       profile.save!
+      profile
     end
 
     private
+
+    attr_accessor :user, :vendor, :phone_confirmed
+    attr_writer :pii_attributes
 
     # rubocop:disable MethodLength, AbcSize
     # This method is single statement spread across many lines for readability
@@ -27,15 +40,9 @@ module Idv
         zipcode: Pii::Attribute.new(raw: appl.zipcode, norm: norm_appl.zipcode),
         dob: Pii::Attribute.new(raw: appl.dob, norm: norm_appl.dob),
         ssn: Pii::Attribute.new(raw: appl.ssn, norm: norm_appl.ssn),
-        phone: Pii::Attribute.new(raw: appl.phone, norm: norm_appl.phone),
-        otp: generate_otp
+        phone: Pii::Attribute.new(raw: appl.phone, norm: norm_appl.phone)
       )
     end
     # rubocop:enable MethodLength, AbcSize
-
-    def generate_otp(length: 10)
-      # Crockford encoding is 5 bits per character
-      Base32::Crockford.encode(SecureRandom.random_number(2**(5 * length)), length: length)
-    end
   end
 end

@@ -13,7 +13,7 @@ describe 'layouts/application.html.slim' do
         service_provider_request: ServiceProviderRequest.new
       ).call
     )
-    allow(view.request).to receive(:original_url).and_return('http://test.host/foobar')
+    allow(view.request).to receive(:original_fullpath).and_return('/foobar')
     allow(view).to receive(:current_user).and_return(User.new)
     controller.request.path_parameters[:controller] = 'users/sessions'
     controller.request.path_parameters[:action] = 'new'
@@ -54,6 +54,17 @@ describe 'layouts/application.html.slim' do
       render
 
       expect(view).to_not render_template(partial: '_i18n_mode')
+    end
+  end
+
+  context '<title>' do
+    it 'does not double-escape HTML in the title tag' do
+      view.title("Something with 'single quotes'")
+
+      render
+
+      doc = Nokogiri::HTML(rendered)
+      expect(doc.at_css('title').text).to eq("login.gov - Something with 'single quotes'")
     end
   end
 

@@ -1,7 +1,8 @@
 class Analytics
-  def initialize(user, request)
+  def initialize(user:, request:, sp:)
     @user = user
     @request = request
+    @sp = sp
   end
 
   def track_event(event, attributes = {})
@@ -9,13 +10,12 @@ class Analytics
       event_properties: attributes.except(:user_id),
       user_id: attributes[:user_id] || uuid,
     }
-
     ahoy.track(event, analytics_hash.merge!(request_attributes))
   end
 
   private
 
-  attr_reader :user, :request
+  attr_reader :user, :request, :sp
 
   def ahoy
     @ahoy ||= Rails.env.test? ? FakeAhoyTracker.new : Ahoy::Tracker.new(request: request)
@@ -26,6 +26,8 @@ class Analytics
       user_ip: request.remote_ip,
       user_agent: request.user_agent,
       host: request.host,
+      pid: Process.pid,
+      service_provider: sp,
     }
   end
 

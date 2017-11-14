@@ -1,33 +1,6 @@
 require 'rails_helper'
 
 describe TwilioService do
-  describe 'proxy configuration' do
-    it 'ignores the proxy configuration if not set' do
-      TwilioService.telephony_service = Twilio::REST::Client
-
-      expect(Figaro.env).to receive(:proxy_addr).and_return(nil)
-      expect(Twilio::REST::Client).to receive(:new).with(/sid(1|2)/, /token(1|2)/)
-
-      TwilioService.new
-    end
-
-    it 'passes the proxy configuration if set' do
-      TwilioService.telephony_service = Twilio::REST::Client
-
-      expect(Figaro.env).to receive(:proxy_addr).at_least(:once).and_return('123.456.789')
-      expect(Figaro.env).to receive(:proxy_port).and_return('6000')
-
-      expect(Twilio::REST::Client).to receive(:new).with(
-        /sid(1|2)/,
-        /token(1|2)/,
-        proxy_addr: '123.456.789',
-        proxy_port: '6000'
-      )
-
-      TwilioService.new
-    end
-  end
-
   context 'when telephony is disabled' do
     before do
       expect(FeatureManagement).to receive(:telephony_disabled?).at_least(:once).and_return(true)
@@ -35,17 +8,6 @@ describe TwilioService do
 
     it 'uses NullTwilioClient' do
       TwilioService.telephony_service = Twilio::REST::Client
-
-      expect(NullTwilioClient).to receive(:new)
-      expect(Twilio::REST::Client).to_not receive(:new)
-
-      TwilioService.new
-    end
-
-    it 'uses NullTwilioClient when proxy is set' do
-      TwilioService.telephony_service = Twilio::REST::Client
-
-      allow(Figaro.env).to receive(:proxy_addr).and_return('123.456.789')
 
       expect(NullTwilioClient).to receive(:new)
       expect(Twilio::REST::Client).to_not receive(:new)
@@ -101,6 +63,22 @@ describe TwilioService do
       expect(msg.url).to eq('https://twimlets.com/say?merp')
       expect(msg.from).to match(/(\+19999999999|\+12222222222)/)
     end
+
+    it 'partially redacts phone numbers embedded in error messages from Twilio' do
+      TwilioService.telephony_service = FakeVoiceCall
+      raw_message = 'Unable to create record: Account not authorized to call +123456789012.'
+      error_code = '21215'
+      status_code = 400
+      sanitized_message = 'Unable to create record: Account not authorized to call +12345#######.'
+
+      service = TwilioService.new
+
+      expect(service.send(:client).calls).to receive(:create).
+        and_raise(Twilio::REST::RestError.new(raw_message, error_code, status_code))
+
+      expect { service.place_call(to: '+123456789012', url: 'https://twimlet.com') }.
+        to raise_error(Twilio::REST::RestError, sanitized_message)
+    end
   end
 
   describe '#send_sms' do
@@ -120,6 +98,22 @@ describe TwilioService do
         expect(msg.to).to eq('5555555555')
         expect(msg.body).to eq('!!CODE1!!')
       end
+    end
+
+    it 'partially redacts phone numbers embedded in error messages from Twilio' do
+      TwilioService.telephony_service = FakeSms
+      raw_message = "The 'To' number +1 (888) 555-5555 is not a valid phone number"
+      error_code = '21211'
+      status_code = 400
+      sanitized_message = "The 'To' number +1 (888) 5##-#### is not a valid phone number"
+
+      service = TwilioService.new
+
+      expect(service.send(:client).messages).to receive(:create).
+        and_raise(Twilio::REST::RestError.new(raw_message, error_code, status_code))
+
+      expect { service.send_sms(to: '+1 (888) 555-5555', body: 'test') }.
+        to raise_error(Twilio::REST::RestError, sanitized_message)
     end
   end
 end

@@ -3,18 +3,22 @@ Attribute:
 ControlParameter:
   exclude:
     - OpenidConnectRedirector#initialize
+    - NoRetryJobs#call
 DuplicateMethodCall:
   exclude:
     - ApplicationController#disable_caching
+    - IdvFailureConcern#render_failure
     - ServiceProviderSessionDecorator#registration_heading
     - MfaConfirmationController#handle_invalid_password
     - needs_to_confirm_email_change?
     - WorkerHealthChecker#status
     - FileEncryptor#encrypt
     - UserFlowExporter#self.massage_assets
+    - BasicAuthUrl#build
 FeatureEnvy:
   exclude:
     - ActiveJob::Logging::LogSubscriber#json_for
+    - Aws::SES::Base#deliver
     - track_registration
     - append_info_to_payload
     - generate_slo_request
@@ -27,6 +31,7 @@ FeatureEnvy:
     - Idv::ProfileMaker#pii_from_applicant
     - Idv::Step#vendor_validator_result
     - IdvSession#vendor_result_timed_out?
+    - ServiceProviderSeeder#run
 InstanceVariableAssumption:
   exclude:
     - User
@@ -39,6 +44,8 @@ NestedIterators:
   exclude:
     - FileEncryptor#encrypt
     - UserFlowExporter#self.massage_html
+    - TwilioService#sanitize_phone_number
+    - ServiceProviderSeeder#run
 NilCheck:
   enabled: false
 LongParameterList:
@@ -62,6 +69,7 @@ TooManyInstanceVariables:
 TooManyStatements:
   max_statements: 6
   exclude:
+    - IdvFailureConcern#render_failure
     - OpenidConnect::AuthorizationController#index
     - OpenidConnect::AuthorizationController#store_request
     - SamlIdpAuthConcern#store_saml_request
@@ -79,6 +87,7 @@ TooManyMethods:
     - Idv::Session
     - User
     - Verify::SessionsController
+    - ServiceProviderSessionDecorator
 UncommunicativeMethodName:
   exclude:
     - PhoneConfirmationFlow
@@ -106,7 +115,6 @@ UtilityFunction:
     - WorkerHealthChecker::Middleware#call
     - UserEncryptedAttributeOverrides#create_fingerprint
     - LocaleHelper#locale_url_param
-    - Verify::Base#mock_vendor_partial
     - IdvSession#timed_out_vendor_error
 'app/controllers':
   InstanceVariableAssumption:
@@ -115,6 +123,7 @@ UtilityFunction:
   ControlParameter:
     exclude:
       - complete_idv_session
+      - visit_idp_from_sp_with_loa3
   DuplicateMethodCall:
     enabled: false
   FeatureEnvy:
@@ -137,7 +146,9 @@ UtilityFunction:
   UncommunicativeMethodName:
     exclude:
       - visit_idp_from_sp_with_loa1
+      - visit_idp_from_sp_with_loa3
       - visit_idp_from_mobile_app_with_loa1
+      - visit_idp_from_oidc_sp_with_loa3
   UncommunicativeParameterName:
     exclude:
       - begin_sign_up_with_sp_and_loa

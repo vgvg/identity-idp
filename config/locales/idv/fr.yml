@@ -6,12 +6,12 @@ fr:
       activate_by_phone: Activer par téléphone
       cancel: Annuler et retourner à votre profil
       continue: Continuer la vérification d'identité
-      help: Continuer jusqu'au Centre d'aide
+      continue_plain: Continuer
       mail:
         resend: Envoyer une autre lettre
         send: Envoyer une lettre
       return_to_account: NOT TRANSLATED YET
-      return_to_sp: NOT TRANSLATED YET
+      send_confirmation_code: NOT TRANSLATED YET
     cancel:
       modal_header: Souhaitez-vous vraiment annuler?
       warning_header: Si vous annulez maintenant
@@ -107,8 +107,9 @@ fr:
         quelques informations personnelles de base ainsi que certaines informations
         financières pour compléter ce processus. Si vous n'avez pas cette information
         sous la main, vous pouvez continuer plus tard.
-      confirm: Vous avez crypté vos données vérifiées
       come_back_later: NOT TRANSLATED YET
+      come_back_later_sp_html: NOT TRANSLATED YET
+      confirm: Vous avez crypté vos données vérifiées
       dupe_ssn1: Si vous recevez ce message d'erreur, il est possible que vous ayez
         déjà créé et vérifié un compte, mais avec une adresse courriel différente.
       dupe_ssn2_html: Veuillez %{link} avec l'adresse courriel que vous avez utilisée
@@ -129,13 +130,14 @@ fr:
         no_account: Vous préférez utiliser une carte de crédit?
         no_account_info: Aidez-nous à vérifier votre identité en fournissant les 8
           derniers chiffres de votre carte de crédit.
-      hardfail: Nous ne pouvons pas vérifier votre identité pour le moment.
-      hardfail4: Vous pouvez également aller sur %{sp} où vous trouverez davantage
-        d'aide pour accéder à nos services.
+      hardfail: NOT TRANSLATED YET
+      hardfail4_html: NOT TRANSLATED YET
       help_center: Visitez notre Centre d'aide pour en apprendre davantage sur la
         façon dont nous vérifions votre compte.
       loading: NOT TRANSLATED YET
       mail_sent: Votre lettre est en route
+      otp_delivery_method:
+        phone_number_html: NOT TRANSLATED YET
       personal_details_verified: Information personnelle vérifiée!
       personal_key: Il s'agit de votre nouvelle clé personnelle. Notez-la et conservez-la
         dans un endroit sécuritaire. Vous en aurez besoin si vous perdez votre mot
@@ -151,6 +153,8 @@ fr:
           pour configurer votre mot de passe à usage unique, tant et aussi longtemps
           qu'il respecte les critères mentionnés plus haut.
         us_country_code: NOT TRANSLATED YET
+      return_to_profile: NOT TRANSLATED YET
+      return_to_sp_html: NOT TRANSLATED YET
       review:
         financial_info: Où se trouve l'information sur mon compte bancaire?
         info_verified_html: Nous avons trouvé des données qui correspondent à votre
@@ -179,12 +183,14 @@ fr:
         other: Il ne vous reste que strong%{count} tentatives./strong
       button:
         fail: OK
+        jobfail: Essayez à nouveau demain
         warning: Essayez à nouveau
       financials:
         fail: Votre compte est strongverrouillé pour 24 heures/strong au cours desquelles
           vous ne pourrez pas y accéder. Consultez notre Centre d'aide pour plus d'information
           sur la vérification de votre identité.
         heading: Nous ne trouvons pas de données qui correspondent à vos données financières.
+        jobfail: NOT TRANSLATED YET
         timeout: NOT TRANSLATED YET
         warning: Veuillez vérifier l'information que vous avez fournie.
       phone:
@@ -193,6 +199,7 @@ fr:
           sur la vérification de votre identité.
         heading: Nous ne trouvons pas de données qui correspondent à vos informations
           téléphoniques.
+        jobfail: NOT TRANSLATED YET
         timeout: NOT TRANSLATED YET
         warning: Veuillez vérifier l'information que vous avez fournie.
       sessions:
@@ -200,6 +207,7 @@ fr:
           vous ne pourrez pas y accéder.
         heading: Nous ne trouvons pas de données qui correspondent à vos informations
           téléphoniques.
+        jobfail: NOT TRANSLATED YET
         timeout: NOT TRANSLATED YET
         warning: Veuillez vérifier l'information que vous avez fournie. Un numéro
           de sécurité sociale, un code ZIP ou une date de naissance mal écrits sont
@@ -223,6 +231,7 @@ fr:
       mail:
         resend: Vous voulez une autre lettre?
         verify: Vous voulez une lettre?
+      otp_delivery_method: NOT TRANSLATED YET
       phone: Numéro de téléphone enregistré
       review: Réviser et soumettre
       select_verification: Activer votre compte

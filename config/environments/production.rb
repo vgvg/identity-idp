@@ -1,7 +1,8 @@
 Rails.application.configure do
   config.cache_classes = true
   config.eager_load = true
-  config.consider_all_requests_local       = false
+  config.consider_all_requests_local = false
+  config.action_controller.asset_host = Figaro.env.domain_name
   config.action_controller.perform_caching = true
   config.serve_static_files = ENV['RAILS_SERVE_STATIC_FILES'].present?
   config.assets.js_compressor = :uglifier
@@ -16,12 +17,14 @@ Rails.application.configure do
     protocol: 'https',
   }
   config.action_mailer.asset_host = Figaro.env.mailer_domain_name
-  config.action_mailer.raise_delivery_errors = false
+  config.action_mailer.raise_delivery_errors = true
   config.action_mailer.default_options = { from: Figaro.env.email_from }
   config.action_mailer.delivery_method = if Figaro.env.disable_email_sending == 'true'
                                            :test
-                                         else
+                                         elsif Figaro.env.mandrill_api_token.present?
                                            :mandrill
+                                         else
+                                           :ses
                                          end
 
   routes.default_url_options[:protocol] = :https
@@ -32,11 +35,6 @@ Rails.application.configure do
 
   config.log_level = :info
   config.lograge.enabled = true
-  config.lograge.custom_options = lambda do |event|
-    event.payload[:timestamp] = event.time
-    event.payload[:uuid] = SecureRandom.uuid
-    event.payload.except(:params)
-  end
   config.lograge.ignore_actions = ['Users::SessionsController#active']
   config.lograge.formatter = Lograge::Formatters::Json.new
 end

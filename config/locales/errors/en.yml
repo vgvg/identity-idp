@@ -34,6 +34,12 @@ en:
       personal_key_incorrect: Incorrect personal key
       requires_phone: requires you to enter your phone number.
       unauthorized_authn_context: Unauthorized authentication context
+      unauthorized_nameid_format: Unauthorized nameID format
       unauthorized_service_provider: Unauthorized Service Provider
+      usps_otp_expired: Your confirmation code has expired. Please request another
+        letter for a new code.
       weak_password: Your password is not strong enough. %{feedback}
+      invalid_phone_number: The phone number entered is not valid.
+      invalid_sms_number: The phone number entered doesn't support text messaging.
+      otp_failed: Your one time password failed to send.
     not_authorized: You are not authorized to perform this action.

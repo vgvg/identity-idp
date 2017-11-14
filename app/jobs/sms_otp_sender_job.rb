@@ -1,4 +1,4 @@
-class SmsOtpSenderJob < ActiveJob::Base
+class SmsOtpSenderJob < ApplicationJob
   queue_as :sms
 
   def perform(code:, phone:, otp_created_at:)
@@ -17,14 +17,5 @@ class SmsOtpSenderJob < ActiveJob::Base
       to: phone,
       body: I18n.t('jobs.sms_otp_sender_job.message', code: code, app: APP_NAME)
     )
-  rescue Twilio::REST::RequestError => error
-    sanitize_phone_number(error.message)
-    raise
-  end
-
-  def sanitize_phone_number(str)
-    return unless str =~ /is not a valid phone number/
-
-    str.gsub!(/\+[\d\(\)\- ]+/) { |match| match.gsub(/\d/, '#') }
   end
 end

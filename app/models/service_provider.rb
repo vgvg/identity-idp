@@ -1,6 +1,6 @@
 require 'fingerprinter'
 
-class ServiceProvider < ActiveRecord::Base
+class ServiceProvider < ApplicationRecord
   scope(:active, -> { where(active: true) })
 
   def self.from_issuer(issuer)
@@ -42,9 +42,5 @@ class ServiceProvider < ActiveRecord::Base
 
   def live?
     active? && approved?
-  end
-
-  def redirect_uris
-    super.presence || Array(redirect_uri)
   end
 end

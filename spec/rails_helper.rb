@@ -35,16 +35,22 @@ RSpec.configure do |config|
 
   config.before(:suite) do
     Rails.application.load_seed
-    Rack::Attack.cache.store = ActiveSupport::Cache::MemoryStore.new
   end
 
   config.before(:each) do
     I18n.locale = :en
   end
 
+  config.before(:each, js: true) do
+    allow(Figaro.env).to receive(:domain_name).and_return('127.0.0.1')
+  end
+
+  config.before(:each, type: :controller) do
+    @request.host = Figaro.env.domain_name
+  end
+
   config.before(:each) do
     allow(ValidateEmail).to receive(:mx_valid?).and_return(true)
-    Rack::Attack.cache.store.clear
   end
 
   config.before(:each, twilio: true) do
@@ -56,6 +62,12 @@ RSpec.configure do |config|
     allow(VendorValidatorJob).to receive(:perform_later) do |*args|
       VendorValidatorJob.perform_now(*args)
     end
+  end
+
+  config.around(:each, user_flow: true) do |example|
+    Capybara.current_driver = :rack_test
+    example.run
+    Capybara.use_default_driver
   end
 end
 

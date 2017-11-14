@@ -101,6 +101,19 @@ module SamlAuthHelper
     settings
   end
 
+  def email_nameid_saml_settings_for_allowed_issuer
+    settings = saml_settings.dup
+    settings.name_identifier_format = 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
+    settings.issuer = 'https://rp1.serviceprovider.com/auth/saml/metadata'
+    settings
+  end
+
+  def email_nameid_saml_settings_for_disallowed_issuer
+    settings = saml_settings.dup
+    settings.name_identifier_format = 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress'
+    settings
+  end
+
   def loa3_saml_settings
     settings = sp1_saml_settings.dup
     settings.authn_context = Saml::Idp::Constants::LOA3_AUTHN_CONTEXT_CLASSREF
@@ -158,7 +171,7 @@ module SamlAuthHelper
 
   def saml_get_auth(settings)
     # GET redirect binding Authn Request
-    get(:auth, SAMLRequest: URI.decode(saml_request(settings)))
+    get :auth, params: { SAMLRequest: URI.decode(saml_request(settings)) }
   end
 
   private

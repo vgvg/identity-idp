@@ -2,14 +2,25 @@ require 'rails_helper'
 
 describe VerifyAccountForm do
   subject(:form) do
-    VerifyAccountForm.new(user: user, otp: entered_otp, pii_attributes: pii_attributes)
+    VerifyAccountForm.new(user: user, otp: entered_otp)
   end
 
   let(:user) { pending_profile.user }
   let(:entered_otp) { otp }
-  let(:otp) { 'abc123' }
-  let(:pii_attributes) { Pii::Attributes.new_from_hash(otp: otp) }
+  let(:otp) { 'ABC123' }
+  let(:code_sent_at) { Time.zone.now }
   let(:pending_profile) { create(:profile, deactivation_reason: :verification_pending) }
+
+  before do
+    next if pending_profile.blank?
+
+    create(
+      :usps_confirmation_code,
+      otp_fingerprint: Pii::Fingerprinter.fingerprint(otp),
+      code_sent_at: code_sent_at,
+      profile: pending_profile
+    )
+  end
 
   describe '#valid?' do
     context 'when required attributes are not present' do
@@ -57,6 +68,15 @@ describe VerifyAccountForm do
       it 'is invalid' do
         expect(subject).to_not be_valid
         expect(subject.errors[:otp]).to eq [t('errors.messages.confirmation_code_incorrect')]
+      end
+    end
+
+    context 'when OTP is expired' do
+      let(:code_sent_at) { 11.days.ago }
+
+      it 'is invalid' do
+        expect(subject).to_not be_valid
+        expect(subject.errors[:otp]).to eq [t('errors.messages.usps_otp_expired')]
       end
     end
   end

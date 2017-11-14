@@ -3,6 +3,8 @@ Rails.application.routes.draw do
   mount Sidekiq::Web => '/sidekiq', constraints: AdminConstraint.new
 
   # Non i18n routes. Alphabetically sorted.
+  get '/api/health' => 'health/health#index'
+  get '/api/health/database' => 'health/database#index'
   get '/api/health/workers' => 'health/workers#index'
   get '/api/openid_connect/certs' => 'openid_connect/certs#index'
   post '/api/openid_connect/token' => 'openid_connect/token#create'
@@ -15,6 +17,10 @@ Rails.application.routes.draw do
   match '/api/saml/auth' => 'saml_idp#auth', via: %i[get post]
 
   post '/api/service_provider' => 'service_provider#update'
+  match '/api/voice/otp' => 'voice/otp#show',
+        via: [:get, :post],
+        as: :voice_otp,
+        defaults: { format: :xml }
 
   get '/openid_connect/authorize' => 'openid_connect/authorization#index'
   get '/openid_connect/logout' => 'openid_connect/logout#index'
@@ -89,6 +95,7 @@ Rails.application.routes.draw do
     get '/manage/phone' => 'users/phones#edit'
     match '/manage/phone' => 'users/phones#update', via: %i[patch put]
     get '/manage/personal_key' => 'users/personal_keys#show', as: :manage_personal_key
+    post '/account/personal_key' => 'users/personal_keys#create', as: :create_new_personal_key
     post '/manage/personal_key' => 'users/personal_keys#update'
 
     get '/otp/send' => 'users/two_factor_authentication#send_code'
@@ -134,6 +141,8 @@ Rails.application.routes.draw do
       put '/verify/finance' => 'verify/finance#create'
       get '/verify/finance/other' => 'verify/finance_other#new'
       get '/verify/finance/result' => 'verify/finance#show'
+      get '/verify/otp_delivery_method' => 'verify/otp_delivery_method#new'
+      put '/verify/otp_delivery_method' => 'verify/otp_delivery_method#create'
       get '/verify/phone' => 'verify/phone#new'
       put '/verify/phone' => 'verify/phone#create'
       get '/verify/phone/result' => 'verify/phone#show'
@@ -161,7 +170,5 @@ Rails.application.routes.draw do
   # The line below will route all requests that aren't
   # defined route to the 404 page. Therefore, anything you put after this rule
   # will be ignored.
-  constraints(format: /html/) do
-    match '*path', via: :all, to: 'pages#page_not_found'
-  end
+  match '*path', via: :all, to: 'pages#page_not_found'
 end

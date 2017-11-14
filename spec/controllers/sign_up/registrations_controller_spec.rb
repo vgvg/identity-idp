@@ -35,6 +35,13 @@ describe SignUp::RegistrationsController, devise: true do
 
       expect(response).to redirect_to account_path
     end
+
+    it 'gracefully handles invalid formats' do
+      @request.env['HTTP_ACCEPT'] = "nessus=bad_bad_value'"
+      get :new
+
+      expect(response.status).to eq(200)
+    end
   end
 
   describe '#create' do
@@ -45,7 +52,7 @@ describe SignUp::RegistrationsController, devise: true do
         allow(@analytics).to receive(:track_event)
         allow(subject).to receive(:create_user_event)
 
-        post :create, user: { email: 'new@example.com' }
+        post :create, params: { user: { email: 'new@example.com' } }
 
         user = User.find_with_email('new@example.com')
 
@@ -63,7 +70,7 @@ describe SignUp::RegistrationsController, devise: true do
       end
 
       it 'sets the email in the session and redirects to sign_up_verify_email_path' do
-        post :create, user: { email: 'test@test.com' }
+        post :create, params: { user: { email: 'test@test.com' } }
 
         expect(session[:email]).to eq('test@test.com')
         expect(response).to redirect_to(sign_up_verify_email_path)
@@ -73,7 +80,7 @@ describe SignUp::RegistrationsController, devise: true do
         user = create(:user)
         stub_sign_in(user)
 
-        post :create, user: { email: user.email }
+        post :create, params: { user: { email: user.email } }
 
         expect(response).to redirect_to account_path
       end
@@ -95,7 +102,7 @@ describe SignUp::RegistrationsController, devise: true do
         with(Analytics::USER_REGISTRATION_EMAIL, analytics_hash)
       expect(subject).to_not receive(:create_user_event)
 
-      post :create, user: { email: 'TEST@example.com ' }
+      post :create, params: { user: { email: 'TEST@example.com ' } }
     end
 
     it 'tracks unsuccessful user registration' do
@@ -111,7 +118,7 @@ describe SignUp::RegistrationsController, devise: true do
       expect(@analytics).to receive(:track_event).
         with(Analytics::USER_REGISTRATION_EMAIL, analytics_hash)
 
-      post :create, user: { email: 'invalid@', request_id: '' }
+      post :create, params: { user: { email: 'invalid@', request_id: '' } }
     end
   end
 
@@ -122,7 +129,7 @@ describe SignUp::RegistrationsController, devise: true do
       expect(@analytics).to receive(:track_event).
         with(Analytics::USER_REGISTRATION_INTRO_VISIT)
 
-      get :show, request_id: 'foo'
+      get :show, params: { request_id: 'foo' }
     end
 
     it 'cannot be viewed by signed in users' do

@@ -1,10 +1,14 @@
 exclude:
     - 'app/views/shared/_flashes.html.slim'
+    - 'app/views/shared/_null.html.slim'
 linters:
   LineLength:
     max: 100
     exclude:
       - 'app/views/pages/help.html.slim'
       - 'app/views/pages/privacy_policy.html.slim'
+  TagCase:
+    exclude:
+     - 'app/views/voice/otp/show.xml.slim'
   RuboCop:
     enabled: true

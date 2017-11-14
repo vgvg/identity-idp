@@ -20,7 +20,7 @@ module Idv
       vendor_session_id
     ].freeze
 
-    attr_reader :current_user
+    attr_reader :current_user, :usps_otp
 
     def initialize(user_session:, current_user:, issuer:)
       @user_session = user_session
@@ -49,7 +49,7 @@ module Idv
     end
 
     def cache_applicant_profile_id
-      profile = profile_maker.profile
+      profile = profile_maker.save_profile
       self.pii = profile_maker.pii_attributes
       self.profile_id = profile.id
       self.personal_key = profile.personal_key
@@ -65,7 +65,7 @@ module Idv
     end
 
     def profile
-      @_profile ||= Profile.find(profile_id)
+      @_profile ||= Profile.find_by(id: profile_id)
     end
 
     def clear
@@ -91,8 +91,10 @@ module Idv
       if pii.is_a?(String)
         self.pii = Pii::Attributes.new_from_json(user_session[:decrypted_pii])
       end
+      confirmation_maker = UspsConfirmationMaker.new(pii: pii, issuer: issuer, profile: profile)
+      confirmation_maker.perform
 
-      UspsConfirmationMaker.new(pii: pii, issuer: issuer).perform
+      @usps_otp = confirmation_maker.otp
     end
 
     def alive?

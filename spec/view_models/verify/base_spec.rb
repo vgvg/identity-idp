@@ -1,28 +1,6 @@
 require 'rails_helper'
 
 RSpec.describe Verify::Base do
-  describe '#mock_vendor_partial' do
-    context 'idv vendor is mock' do
-      it 'returns no pii warning partial' do
-        allow(Figaro.env).to receive(:proofing_vendors).and_return('mock')
-
-        partial = Verify::Base.new(remaining_attempts: 1, idv_form: nil).mock_vendor_partial
-
-        expect(partial).to eq 'verify/sessions/no_pii_warning'
-      end
-    end
-
-    context 'idv vendor is not mock' do
-      it 'returns null partial' do
-        allow(Figaro.env).to receive(:proofing_vendors).and_return('other')
-
-        partial = Verify::Base.new(remaining_attempts: 1, idv_form: nil).mock_vendor_partial
-
-        expect(partial).to eq 'shared/null'
-      end
-    end
-  end
-
   describe '#message' do
     let(:timed_out) { false }
     let(:view_model) do
@@ -51,6 +29,43 @@ RSpec.describe Verify::Base do
         it 'uses the timeout copy' do
           expect(message).to include(t('idv.modal.phone.timeout'))
         end
+      end
+    end
+  end
+
+  describe '#modal_class_name' do
+    let(:view_model) do
+      Verify::Base.new(
+        error: error,
+        remaining_attempts: 1,
+        idv_form: nil,
+        timed_out: false
+      )
+    end
+
+    subject(:modal_class_name) { view_model.modal_class_name }
+
+    context 'when error is warning' do
+      let(:error) { 'warning' }
+
+      it 'returns modal_warning' do
+        expect(modal_class_name).to eq 'modal-warning'
+      end
+    end
+
+    context 'when error is jobfail' do
+      let(:error) { 'jobfail' }
+
+      it 'returns modal_warning' do
+        expect(modal_class_name).to eq 'modal-warning'
+      end
+    end
+
+    context 'when error is fail' do
+      let(:error) { 'fail' }
+
+      it 'returns modal_fail' do
+        expect(modal_class_name).to eq 'modal-fail'
       end
     end
   end

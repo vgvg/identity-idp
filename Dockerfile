@@ -1,5 +1,5 @@
 # Use the official Ruby image because the Rails images have been deprecated
-FROM ruby:2.3.3
+FROM ruby:2.3
 
 # npm is needed by browserify to install packages
 # TOOD(sbc): Create a separate production container without this.
@@ -24,6 +24,7 @@ WORKDIR /upaya
 
 COPY package.json /upaya
 RUN npm install
+RUN npm run build
 
 COPY Gemfile /upaya
 COPY Gemfile.lock /upaya
