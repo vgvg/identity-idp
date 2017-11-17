@@ -27,7 +27,7 @@ class UserBehavior(locust.TaskSet):
         resp.raise_for_status()
         dom = pyquery.PyQuery(resp.content)
         data = {
-            'user[email]': 'test+' + fake.md5() + '@test.com',
+            'user[email]': 'justin.grevich+' + fake.md5() + '@gsa.gov',
             'authenticity_token': authenticity_token(dom),
             'commit': 'Submit',
         }
