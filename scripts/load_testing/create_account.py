@@ -47,7 +47,7 @@ def signup(t):
         return
 
     # Follow email confirmation link and submit password
-    resp = self.client.get(link, auth=auth, name='/sign_up/email/confirm?confirmation_token=')
+    resp = t.client.get(link, auth=auth, name='/sign_up/email/confirm?confirmation_token=')
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
     confirmation_token = dom.find('input[name="confirmation_token"]')[0].attrib['value']
@@ -99,29 +99,31 @@ def signup(t):
         'commit': 'Continue',
     }
     t.client.post('/sign_up/personal_key', data=data, auth=auth)
+    resp = t.client.get('/sign_up/personal_key', auth=auth)
+    resp.raise_for_status()
 
-    # go straight to profile page
-    t.client.get('/profile', auth=auth)
-
-    # sign out
-    t.client.get('/api/saml/logout', auth=auth)
 
 class UserBehavior(locust.TaskSet):
-    
-    @locust.task
-    def idp_create_account(self): 
-        print("Task: Create account from idp")
-        signup(self)
+
+    #@locust.task
+    #def idp_create_account(self):
+    #    print("Task: Create account from idp")
+    #    signup(self)
+    #    # go straight to profile page
+    #    t.client.get('/profile', auth=auth)
+    #    # sign out
+    #    t.client.get('/api/saml/logout', auth=auth)
 
     @locust.task
-    def usajobs_create_account(self): 
+    def usajobs_create_account(self):
         print("Task: Create account from usajobs")
         resp = self.client.get('https://www.test.usajobs.gov/')
         resp.raise_for_status()
         resp = self.client.get('https://www.test.usajobs.gov/Applicant/ProfileDashboard/Home')
         resp.raise_for_status()
         signup(self)
-
+        resp = self.client.get('https://login.test.usajobs.gov/Account/Contact')
+        resp.raise_for_status()
 
 class WebsiteUser(locust.HttpLocust):
     task_set = UserBehavior

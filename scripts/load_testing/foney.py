@@ -51,7 +51,7 @@ def prefixes(count_start=200, count=1000):
     return co
 
 
-def phone_numbers(npa=206, count_start=1, count=1000):
+def phone_numbers(npa=206, count_start=1, count=9999):
     pns = []
 
     for co in prefixes():
