@@ -51,7 +51,6 @@ NilCheck:
 LongParameterList:
   exclude:
     - IdentityLinker#optional_attributes
-    - Idv::ProoferJob#perform
     - Idv::VendorResult#initialize
 RepeatedConditional:
   exclude:
@@ -66,7 +65,6 @@ TooManyInstanceVariables:
     - OpenidConnectAuthorizeForm
     - OpenidConnectRedirector
     - Idv::VendorResult
-    - Idv::ProoferJob
 TooManyStatements:
   max_statements: 6
   exclude:

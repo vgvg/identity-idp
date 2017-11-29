@@ -65,6 +65,6 @@ class FeatureManagement
   end
 
   def self.no_pii_mode?
-    enable_identity_verification? && Idv::Vendor.new.pick == :mock
+    enable_identity_verification? && Figaro.env.proofing_vendor_profile == :mock
   end
 end
