@@ -41,27 +41,34 @@ def authenticity_token(dom):
     """
     Retrieves the CSRF auth token from the DOM for submission
     """
-    return dom.find('input[name="authenticity_token"]').eq(0).attr('value')
+    return dom.find('input[name="authenticity_token"]:first').attr('value')
 
 def login(t, credentials):
     """
     Takes a locustTask object and signs you in.
 
     To-do:
-    1. pull credentials from sqllite db
-    2. figure out how to handle invalid login attempts.
-    3. Handle account locks
+    1. figure out how to handle invalid login attempts.
+    2. Handle account locks
     """
-    print('beginning sign in with credentials: {}'.format(credentials))
-    t.client.get('/sign_up/start')
 
-    # then go from splash page to sign-in page and submit credentials
-    resp = t.client.get('/')
+    # ensure we're at sign-in page and submit credentials
+    resp = t.client.get('/', catch_response=True)
     resp.raise_for_status()
+    print('starting login at {}'.format(resp.url))
     dom = pyquery.PyQuery(resp.content)
+    token = authenticity_token(dom)
+    if not token or "Sign in" not in dom.text():
+        resp.failure(
+            """
+            We don't appear to be on a sign-in page.
+            Current URL is {}.
+            """.format(resp.url)
+        )
 
     resp = t.client.post(
-        '/',
+        resp.url,
+        catch_response=True,
         data = {
             'user[email]': credentials['email'],
             'user[password]': credentials['password'],
@@ -71,28 +78,36 @@ def login(t, credentials):
     )
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
-    try:
-        code = dom.find("#code")
-        # It's prompting for a 2FA code, so we know it's a valid login
-        resp = t.client.post(
-            '/login/two_factor/sms',
-            data = {
-                'code': code.attr('value'),
-                'authenticity_token': authenticity_token(dom),
-                'commit': 'Submit'
-            }
+    code = dom.find("#code").attr('value')
+    code_form = dom.find("form[action='/login/two_factor/sms']")
+    if not code:
+        resp.failure(
+            """
+            We can't find the 2FA code or form.
+            Text of current page is {}.
+            """.format(dom.text())
         )
-        resp.raise_for_status()
-        print('Sign in complete. Currently at {}.'.format(resp.url))
-    except Exception as error:
-        print(error)
+    # Since we have a code
+    resp = t.client.post(
+        code_form.attr('action'),
+        data = {
+            'code': code,
+            'authenticity_token': authenticity_token(dom),
+            'commit': 'Submit'
+        }
+    )
+    # We're not checking for post-login state here, 
+    # as it will vary depending on the SP.
+    resp.raise_for_status()
+
+    return resp
+
 
 def logout(t):
     """
     Takes a locustTask object and signs you out.
     Naively assumes the user is actually logged in already.
     """
-    print('Beginning sign out')
     resp = t.client.get('/')
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
@@ -105,8 +120,6 @@ def logout(t):
         resp = t.client.get(sign_out_link.attr('href'))
         resp.raise_for_status()
         dom = pyquery.PyQuery(resp.content)
-        # Let's confirm:
-        print(dom.find('div.alert-success').eq(0).text())
     except Exception as error:
         print(error)
 
@@ -148,11 +161,9 @@ def change_pass(t, password):
             }
         )
         resp.raise_for_status()
-        dom = pyquery.PyQuery(resp.content)
-        print(dom.find('div.alert-notice').eq(0).text())
     else:
         # To-do: handle reauthn case
-        print(resp.url)
+        print("Failed to find correct page. Currently at {}".format(resp.url))
 
 def signup(t, signup_url=None):
     """
@@ -212,7 +223,8 @@ def signup(t, signup_url=None):
         'commit': 'Submit',
     }
     resp = t.client.post(
-        '/sign_up/create_password', data=data, auth=auth)
+        '/sign_up/create_password', data=data, auth=auth
+    )
     resp.raise_for_status()
 
     # visit phone setup page and submit phone number
@@ -228,14 +240,15 @@ def signup(t, signup_url=None):
     resp = t.client.post('/phone_setup', data=data, auth=auth)
     resp.raise_for_status()
 
-    # visit enter security code page and submit pre-filled OTP
+    # visit security code page and submit pre-filled OTP
     dom = pyquery.PyQuery(resp.content)
     try:
         otp_code = dom.find('input[name="code"]')[0].attrib['value']
     except Exception as error:
-        print("There is a problem creating this account.")
-        print(error)
-        print(resp.content)
+        print("""
+            There is a problem creating this account: {}. 
+            Here is the response content: {}
+            """.format(error, resp.content))
         return
 
     data = {
@@ -256,15 +269,10 @@ def signup(t, signup_url=None):
 
 
 class UserBehavior(locust.TaskSet):
-    """
-    # TO-DO: Put logout in on_stop once it's merged into locust
-        # https://github.com/locustio/locust/pull/658
-
-    """
     def on_start(self):
         pass
 
-    @locust.task(1)
+    #@locust.task(1)
     def idp_change_pass(self):
         """
         Login, change pass, change it back and logout from IDP.
@@ -272,7 +280,6 @@ class UserBehavior(locust.TaskSet):
         This is given a very low weight, since we do not expect
         it to be a common pattern in the real world.
         """
-        print("Task: Change pass from IDP")
         credentials = random_cred()
         login(self, credentials)
         change_pass(self, "thisisanewpass")
@@ -280,7 +287,7 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    @locust.task(2)
+    #@locust.task(2)
     def sp_rails_change_pass(self):
         """
         Login, change pass, change it back and logout from
@@ -289,13 +296,12 @@ class UserBehavior(locust.TaskSet):
         This is given a very low weight, since we do not expect
         it to be a common pattern in the real world.
         """
-        print("Task: Change pass from sp_rails")
         resp = self.client.get('http://localhost:3003')
         resp.raise_for_status()
         dom = pyquery.PyQuery(resp.content)
 
-        # now submit the LOA1/LOA3 form
         """
+        # TO-DO: submit the LOA1/LOA3 form
         # We can't do this programmatically yet, because there's a mismatch
         # in how we're handling the trailing slash on host in locust and elsewhere:
         # in requests/models.py", line 371, in prepare_url
@@ -311,7 +317,7 @@ class UserBehavior(locust.TaskSet):
                 'authenticity_token': authenticity_token(dom)
             }
         )
-        For now, we're taking advantage of login() going to host + /sign_in
+        # For now, we're taking advantage of login() going to host + /sign_in
         """
         credentials = random_cred()
         login(self, credentials)
@@ -324,18 +330,55 @@ class UserBehavior(locust.TaskSet):
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
+
+        This is most common task and is heavily weighted.
         """
-        print("Task: Change pass from usajobs")
-        resp = self.client.get('https://www.test.usajobs.gov/')
-        resp.raise_for_status()
-        resp = self.client.get('https://www.test.usajobs.gov/Applicant/ProfileDashboard/Home')
-        resp.raise_for_status()
-        # we should now have been redirected to
-        # https://login.test.usajobs.gov/Access/Transition
-        # we could put a resp.url check in here to verify that
-        # We'll now navigate into the regular IDP login flow.
-        credentials = random_cred()
-        login(self, credentials)
+        resp = self.client.get(
+            'https://www.test.usajobs.gov/',
+            catch_response=True
+        )
+        dom = pyquery.PyQuery(resp.content)
+        signin_link = dom.find('a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
+
+        if not signin_link:
+            resp.failure("We could not find a signin link at {}".format(resp.url))
+
+        resp = self.client.get(
+            signin_link[0].attrib['href'],
+            catch_response=True
+        )
+        # we should have been redirected to
+        # https://login.test.usajobs.gov/Access/Transition. Let's do a quick check.
+        if (resp.url is not "https://login.test.usajobs.gov/Access/Transition" or 
+            "usajobs-landing--login-transition-submit" not in resp.content):
+            resp.failure(
+                """"
+                We do not appear to have been redirected to 
+                https://login.test.usajobs.gov/Access/Transition.
+                Our current URL is {}.
+                """.format(resp.url)
+            )
+        # Now that we've confirmed we're at the right URL
+        # we need to POST to it, per USAjobs.
+        resp = self.client.post(
+            resp.url,
+            catch_response=True
+        )
+        # Ccheck to make sure we redirected to the right place
+        # which should match our target host, where the login takes place.
+        if resp.url is not os.getenv('TARGET_HOST'):  
+            resp.failure(
+                """"
+                We do not appear to have been redirected to the IDP host.
+                Instead, we are at {}.
+                """.format(resp.url)
+            )
+
+        # Now that we've confirmed, log in.
+        credentials = random_cred()        
+        resp = login(self, credentials)
+        print("post login, we're at {}".format(resp.url))
+
         change_pass(self, "thisisanewpass")
         # now change it back.
         change_pass(self, credentials['password'])
@@ -343,23 +386,41 @@ class UserBehavior(locust.TaskSet):
 
     @locust.task(2)
     def idp_create_account(self):
-        print("Task: Create account from idp")
+        """
+        Create an account from within the IDP.
+
+        This is given a low weight because it's not common
+        in the real world.
+        """
         signup(self)
         logout(self)
 
     @locust.task(25)
     def usajobs_create_account(self):
-        print("Task: Create account from usajobs")
+        """
+        Create an account from within USAjobs test domain. 
+
+        This is given a relatively low weight.
+        It's much more common than account creation from within IDP
+        but much lower than a simple login/logout.
+
+        If the os env var "NO_LOGOUT" has been set, this will skip 
+        the logout step to help show the load of many open sessions.
+        """
         resp = self.client.get('https://www.test.usajobs.gov/')
         resp.raise_for_status()
         resp = self.client.get('https://www.test.usajobs.gov/Applicant/ProfileDashboard/Home')
         resp.raise_for_status()
-        # A quick post to setup for the SP handshake
+        # A quick post is required to setup for the SP handshake.
+        # We'll pass the response url to signup()
         resp = self.client.post('https://login.test.usajobs.gov/Access/Transition')
         resp.raise_for_status()
-        signup_url = resp.url
-        signup(self, signup_url)
-        logout(self)
+        signup(self, resp.url)
+        
+        # Unless we said not to, sign out now.
+        if "NO_LOGOUT" in os.environ:
+            print("Found 'NO_LOGOUT' in env vars. Skipping logout.")
+            logout(self)
 
 
 class WebsiteUser(locust.HttpLocust):
