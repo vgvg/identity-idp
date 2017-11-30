@@ -79,15 +79,33 @@ def login(t, credentials):
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
     code = dom.find("#code").attr('value')
-    code_form = dom.find("form[action='/login/two_factor/sms']")
+    
     if not code:
-        resp.failure(
-            """
-            We can't find the 2FA code or form.
-            Text of current page is {}.
-            """.format(dom.text())
+        # if we didn't seen the code, then we probably have a failed login 
+        # un-reset credentials. So let's try to rescue with the other pass.
+        resp = t.client.post(
+        resp.url,
+            catch_response=True,
+            data = {
+                'user[email]': credentials['email'],
+                'user[password]': 'thisisanewpass',
+                'authenticity_token': authenticity_token(dom),
+                'commit': 'Submit',
+            }
         )
-    # Since we have a code
+        resp.raise_for_status()
+        dom = pyquery.PyQuery(resp.content)
+        code = dom.find("#code").attr('value')
+        # and if we still don't have code, we have a bigger problem.
+        if not code:
+            resp.failure(
+                """
+                We can't find the 2FA code or form.
+                Text of current page is {}.
+                """.format(dom.text())
+            )
+
+    code_form = dom.find("form[action='/login/two_factor/sms']")
     resp = t.client.post(
         code_form.attr('action'),
         data = {
@@ -96,12 +114,12 @@ def login(t, credentials):
             'commit': 'Submit'
         }
     )
+    print('login complete. Now at {}'.format(resp.url))
     # We're not checking for post-login state here, 
     # as it will vary depending on the SP.
+    
     resp.raise_for_status()
-
     return resp
-
 
 def logout(t):
     """
