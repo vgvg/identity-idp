@@ -9,7 +9,6 @@ gem 'ahoy_matey'
 gem 'american_date'
 gem 'aws-sdk-core'
 gem 'base32-crockford'
-gem 'browserify-rails'
 gem 'device_detector'
 gem 'devise', '~> 4.1'
 gem 'dotiw'
@@ -54,6 +53,7 @@ gem 'twilio-ruby'
 gem 'two_factor_authentication', github: 'Houdini/two_factor_authentication', ref: '1d6abe3'
 gem 'uglifier', '>= 1.3.0'
 gem 'valid_email'
+gem 'webpacker', '~> 3.0'
 gem 'whenever', require: false
 gem 'xml-simple'
 gem 'xmlenc', '~> 0.6.4'
@@ -90,7 +90,6 @@ group :development, :test do
   gem 'pry-byebug'
   gem 'rspec-rails', '~> 3.5.2'
   gem 'slim_lint'
-  gem 'teaspoon-mocha'
   gem 'thin'
 end
 

@@ -54,6 +54,7 @@ Vagrantfile
 /spec/tmp
 /test
 /tmp/*
+/.tmp/
 /vendor/bundle
 /node_modules
 
@@ -63,3 +64,6 @@ Vagrantfile
 /kitchen/nodes/*.json
 /kitchen/data_bags/config/*.yml
 /kitchen/data_bags/config/databag_secrets.json
+/public/packs
+/public/packs-test
+/node_modules

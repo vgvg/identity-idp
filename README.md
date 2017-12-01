@@ -177,8 +177,8 @@ $ make fast_test
 See RSpec [docs](https://relishapp.com/rspec/rspec-core/docs/command-line) for
 more information.
 
-JavaScript unit tests will run automatically. However, when authoring JS specs, it is significantly faster to run them in the browser,
-as the whole test environment doesn't have to boot up each time. To view JS tests in the browser, visit /teaspoon/default while the application server is running.
+JavaScript unit tests run using the mocha test runner. Check out the
+[mocha documentation](https://mochajs.org/) for more details.
 
 Run security scanner
 

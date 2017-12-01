@@ -56,8 +56,8 @@ jobs:
       - run:
           name: Test Setup
           command: |
-            npm install
-            npm run build
+            yarn --ignore-engines install
+            yarn --ignore-engines build
             cp config/application.yml.example config/application.yml
             cp certs/saml.crt.example certs/saml.crt
             cp keys/saml.key.enc.example keys/saml.key.enc
@@ -74,7 +74,7 @@ jobs:
             ./cc-test-reporter before-build
 
             bundle exec rspec --format progress
-            bundle exec teaspoon
+            yarn test
             bundle exec slim-lint app/views
 
       - run:

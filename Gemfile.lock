@@ -151,10 +151,6 @@ GEM
       debug_inspector (>= 0.0.1)
     brakeman (3.7.2)
     browser (2.4.0)
-    browserify-rails (4.2.0)
-      addressable (>= 2.4.0)
-      railties (>= 4.0.0, < 5.2)
-      sprockets (>= 3.6.0)
     builder (3.2.3)
     bullet (5.6.1)
       activesupport (>= 3.0.0)
@@ -425,6 +421,8 @@ GEM
       rack (>= 1.2.0)
     rack-protection (2.0.0)
       rack
+    rack-proxy (0.6.2)
+      rack
     rack-test (0.7.0)
       rack (>= 1.0, < 3)
     rack-timeout (0.4.2)
@@ -597,10 +595,6 @@ GEM
     stringex (2.7.1)
     sysexits (1.2.0)
     systemu (2.6.5)
-    teaspoon (1.1.5)
-      railties (>= 3.2.5, < 6)
-    teaspoon-mocha (2.3.3)
-      teaspoon (>= 1.0.0)
     temple (0.8.0)
     terminal-table (1.8.0)
       unicode-display_width (~> 1.1, >= 1.1.1)
@@ -646,6 +640,10 @@ GEM
       addressable (>= 2.3.6)
       crack (>= 0.3.2)
       hashdiff
+    webpacker (3.0.2)
+      activesupport (>= 4.2)
+      rack-proxy (>= 0.6.1)
+      railties (>= 4.2)
     websocket-driver (0.6.5)
       websocket-extensions (>= 0.1.0)
     websocket-extensions (0.1.2)
@@ -677,7 +675,6 @@ DEPENDENCIES
   better_errors
   binding_of_caller
   brakeman
-  browserify-rails
   bullet
   bummr
   capistrano
@@ -755,7 +752,6 @@ DEPENDENCIES
   slim-rails
   slim_lint
   stringex
-  teaspoon-mocha
   thin
   timecop
   twilio-ruby
@@ -763,6 +759,7 @@ DEPENDENCIES
   uglifier (>= 1.3.0)
   valid_email
   webmock
+  webpacker (~> 3.0)
   whenever
   xml-simple
   xmlenc (~> 0.6.4)
