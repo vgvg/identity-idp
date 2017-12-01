@@ -455,6 +455,7 @@ class UserBehavior(locust.TaskSet):
         # Unless we said not to, sign out now.
         if "NO_LOGOUT" in os.environ:
             print("Found 'NO_LOGOUT' in env vars. Skipping logout.")
+        else:
             logout(self)
 
 
