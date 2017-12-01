@@ -21,9 +21,9 @@ NUM_USERS = 100
 def random_cred():
     """
     Given the rake task:
-    rake dev:random_users NUM_USERS=1000 SCRYPT_COST='800$8$1$'
+    rake dev:random_users NUM_USERS=100 SCRYPT_COST='800$8$1$'
 
-    We should have 1000 existing users with credentials matching:
+    We should have 100 existing users with credentials matching:
     * email address testuser1@example.com through testuser1000@example.com
     * the password "salty pickles"
     * a phone number between +1 (415) 555-0001 and +1 (415) 555-1000.
@@ -55,7 +55,11 @@ def login(t, credentials):
     # ensure we're at sign-in page and submit credentials
     resp = t.client.get('/', catch_response=True)
     resp.raise_for_status()
-    print('starting login at {}'.format(resp.url))
+    
+    if '/account' in resp.url:
+        print("You're already logged in. We're gonna bail out of login().")
+        return resp
+
     dom = pyquery.PyQuery(resp.content)
     token = authenticity_token(dom)
     if not token or "Sign in" not in dom.text():
@@ -65,7 +69,7 @@ def login(t, credentials):
             Current URL is {}.
             """.format(resp.url)
         )
-
+    print('we appear to be on a sign-in page. posting to {}'.format(resp.url))
     resp = t.client.post(
         resp.url,
         catch_response=True,
@@ -79,12 +83,13 @@ def login(t, credentials):
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
     code = dom.find("#code").attr('value')
-    
+    print('checking code: {} in {}'.format(dom.find("#code"), resp.content))
     if not code:
         # if we didn't seen the code, then we probably have a failed login 
         # un-reset credentials. So let's try to rescue with the other pass.
+        print("we didn't see a code, so we're trying again, posting to {}".format(resp.url))
         resp = t.client.post(
-        resp.url,
+            resp.url,
             catch_response=True,
             data = {
                 'user[email]': credentials['email'],
@@ -96,15 +101,16 @@ def login(t, credentials):
         resp.raise_for_status()
         dom = pyquery.PyQuery(resp.content)
         code = dom.find("#code").attr('value')
+        print('checking code second time: {}'.format(dom.find("#code")))
         # and if we still don't have code, we have a bigger problem.
-        if not code:
+        if not code or code is "None":
             resp.failure(
                 """
                 We can't find the 2FA code or form.
                 Text of current page is {}.
                 """.format(dom.text())
             )
-
+    print("We have a code: {}".format(code))
     code_form = dom.find("form[action='/login/two_factor/sms']")
     resp = t.client.post(
         code_form.attr('action'),
@@ -217,11 +223,21 @@ def signup(t, signup_url=None):
     try:
         link = dom.find("a[href*='confirmation_token']")[0].attrib['href']
     except IndexError:
-        print("""
-            Failed to get confirmation token.
-            Consult https://github.com/18F/identity-idp#load-testing
-            and check your application config."""
-        )
+        if '/account' in resp.url:
+            print("""
+                Account appears to already be signed up and logged in. 
+                We're at {}.
+                """.format(resp.url)
+            )
+        else: 
+            print("""
+                Failed to get confirmation token.
+                Consult https://github.com/18F/identity-idp#load-testing
+                and check your application config.
+
+                We were at {} when we couldn't find it.
+                """.format(resp.url)
+            )
         return
 
     # Follow email confirmation link and submit password
@@ -290,7 +306,7 @@ class UserBehavior(locust.TaskSet):
     def on_start(self):
         pass
 
-    #@locust.task(1)
+    @locust.task(1)
     def idp_change_pass(self):
         """
         Login, change pass, change it back and logout from IDP.
@@ -305,7 +321,7 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    #@locust.task(2)
+    @locust.task(2)
     def sp_rails_change_pass(self):
         """
         Login, change pass, change it back and logout from
@@ -320,7 +336,7 @@ class UserBehavior(locust.TaskSet):
 
         """
         # TO-DO: submit the LOA1/LOA3 form
-        # We can't do this programmatically yet, because there's a mismatch
+        # We can't do this from form action yet, because there's a mismatch
         # in how we're handling the trailing slash on host in locust and elsewhere:
         # in requests/models.py", line 371, in prepare_url
         #     scheme, auth, host, port, path, query, fragment = parse_url(url)
@@ -344,15 +360,16 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    @locust.task(70)
+    #@locust.task(70)
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
 
         This is most common task and is heavily weighted.
         """
+        root_url = 'https://www.test.usajobs.gov'
         resp = self.client.get(
-            'https://www.test.usajobs.gov/',
+            root_url,
             catch_response=True
         )
         dom = pyquery.PyQuery(resp.content)
@@ -362,28 +379,28 @@ class UserBehavior(locust.TaskSet):
             resp.failure("We could not find a signin link at {}".format(resp.url))
 
         resp = self.client.get(
-            signin_link[0].attrib['href'],
+            root_url + signin_link[0].attrib['href'],
             catch_response=True
         )
         # we should have been redirected to
         # https://login.test.usajobs.gov/Access/Transition. Let's do a quick check.
-        if (resp.url is not "https://login.test.usajobs.gov/Access/Transition" or 
-            "usajobs-landing--login-transition-submit" not in resp.content):
+        if resp.url is not "https://login.test.usajobs.gov/Access/Transition":
             resp.failure(
                 """"
                 We do not appear to have been redirected to 
                 https://login.test.usajobs.gov/Access/Transition.
-                Our current URL is {}.
-                """.format(resp.url)
+                Our current URL is {}, with content {}.
+                """.format(resp.url, resp.content)
             )
         # Now that we've confirmed we're at the right URL
         # we need to POST to it, per USAjobs.
         resp = self.client.post(
             resp.url,
-            catch_response=True
+            catch_response=True,
+            data = {}
         )
-        # Ccheck to make sure we redirected to the right place
-        # which should match our target host, where the login takes place.
+        # Check to make sure we redirected to our target host, 
+        # with a request_id in resp.url
         if resp.url is not os.getenv('TARGET_HOST'):  
             resp.failure(
                 """"
