@@ -5,7 +5,7 @@ postgresql: &postgresql
   port: 5432
 
 defaults: &defaults
-  pool: 5
+  pool: 26
   host: localhost
   <<: *postgresql
   # timeout settings
