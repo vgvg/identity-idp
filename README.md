@@ -15,7 +15,7 @@ A Identity Management System powering login.gov.
 - Ruby 2.3
 - [Postgresql](http://www.postgresql.org/download/)
 - [Redis 2.8+](http://redis.io/)
-- [Node.js v4.4.x](https://nodejs.org)
+- [Node.js v8.x.x](https://nodejs.org)
 
 Testing dependencies:
 - [PhantomJS](http://phantomjs.org)

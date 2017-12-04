@@ -56,8 +56,8 @@ jobs:
       - run:
           name: Test Setup
           command: |
-            yarn --ignore-engines install
-            yarn --ignore-engines build
+            yarn install
+            yarn build
             cp config/application.yml.example config/application.yml
             cp certs/saml.crt.example certs/saml.crt
             cp keys/saml.key.enc.example keys/saml.key.enc

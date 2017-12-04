@@ -8,7 +8,7 @@ RUN apt-get install apt-transport-https
 # npm and yarn is needed by webpacker to install packages
 # TOOD(sbc): Create a separate production container without this.
 RUN mkdir /usr/local/node \
-    && curl -L https://nodejs.org/dist/v4.8.4/node-v4.8.4-linux-x64.tar.xz | tar Jx -C /usr/local/node --strip-components=1
+    && curl -L https://nodejs.org/dist/v8.9.1/node-v8.9.1-linux-x64.tar.xz | tar Jx -C /usr/local/node --strip-components=1
 RUN ln -s ../node/bin/node /usr/local/bin/
 RUN ln -s ../node/bin/npm /usr/local/bin/
 RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add - \
@@ -30,8 +30,8 @@ RUN ln -s ../phantomjs/bin/phantomjs /usr/local/bin/
 WORKDIR /upaya
 
 COPY package.json /upaya
-RUN yarn --ignore-engines install
-RUN yarn --ignore-engines build
+RUN yarn install
+RUN yarn build
 
 COPY Gemfile /upaya
 COPY Gemfile.lock /upaya

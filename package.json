@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "engines": {
-    "node": "~4.x.x",
-    "npm": "~3.x.x"
+    "node": "~8.x.x",
+    "npm": "~5.x.x"
   },
   "scripts": {
     "build": "true",
@@ -32,7 +32,9 @@
     "eslint-config-airbnb-base": "^11.2.0",
     "eslint-plugin-import": "^2.2.0",
     "mocha": "^4.0.1",
-    "proxyquire": "^1.8.0",
-    "webpack-dev-server": "^2.9.5"
+    "proxyquire": "^1.8.0"
+  },
+  "resolutions": {
+    "tunnel-agent": "0.6.0"
   }
 }
