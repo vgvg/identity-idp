@@ -46,22 +46,21 @@ def authenticity_token(dom):
 def login(t, credentials):
     """
     Takes a locustTask object and signs you in.
-
-    To-do:
-    1. figure out how to handle invalid login attempts.
-    2. Handle account locks
     """
 
     # ensure we're at sign-in page and submit credentials
     resp = t.client.get('/', catch_response=True)
     resp.raise_for_status()
     
+    # If you're already logged in, it'll redirect to /account.
+    # We need to handle this, or you'll get all sorts of downstream failures.
     if '/account' in resp.url:
-        print("You're already logged in. We're gonna bail out of login().")
+        print("You appear to be already logged in. We're going to quit login().")
         return resp
 
     dom = pyquery.PyQuery(resp.content)
     token = authenticity_token(dom)
+    
     if not token or "Sign in" not in dom.text():
         resp.failure(
             """
@@ -69,7 +68,7 @@ def login(t, credentials):
             Current URL is {}.
             """.format(resp.url)
         )
-    print('we appear to be on a sign-in page. posting to {}'.format(resp.url))
+    
     resp = t.client.post(
         resp.url,
         catch_response=True,
@@ -81,13 +80,17 @@ def login(t, credentials):
         }
     )
     resp.raise_for_status()
+    
     dom = pyquery.PyQuery(resp.content)
     code = dom.find("#code").attr('value')
-    print('checking code: {} in {}'.format(dom.find("#code"), resp.content))
     if not code:
         # if we didn't seen the code, then we probably have a failed login 
         # un-reset credentials. So let's try to rescue with the other pass.
-        print("we didn't see a code, so we're trying again, posting to {}".format(resp.url))
+        print("we didn't see a 2FA code. Trying again, with {} posting to {}".format(
+            credentials,
+            resp.url
+            )
+        )
         resp = t.client.post(
             resp.url,
             catch_response=True,
@@ -99,18 +102,20 @@ def login(t, credentials):
             }
         )
         resp.raise_for_status()
+        
         dom = pyquery.PyQuery(resp.content)
         code = dom.find("#code").attr('value')
-        print('checking code second time: {}'.format(dom.find("#code")))
-        # and if we still don't have code, we have a bigger problem.
-        if not code or code is "None":
-            resp.failure(
-                """
-                We can't find the 2FA code or form.
-                Text of current page is {}.
-                """.format(dom.text())
+        
+        # If we still don't have code, we have a bigger problem.
+        if not code:
+            print("""
+                No 2FA code found after two tries. 
+                Make sure {} is in the DB
+                """.format(credentials)
             )
-    print("We have a code: {}".format(code))
+            resp.failure("No 2FA code on {} using .".format(resp.url, credentials))
+            return
+
     code_form = dom.find("form[action='/login/two_factor/sms']")
     resp = t.client.post(
         code_form.attr('action'),
@@ -120,10 +125,9 @@ def login(t, credentials):
             'commit': 'Submit'
         }
     )
-    print('login complete. Now at {}'.format(resp.url))
+    
     # We're not checking for post-login state here, 
     # as it will vary depending on the SP.
-    
     resp.raise_for_status()
     return resp
 
@@ -360,7 +364,7 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    #@locust.task(70)
+    @locust.task(70)
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
@@ -382,6 +386,13 @@ class UserBehavior(locust.TaskSet):
             root_url + signin_link[0].attrib['href'],
             catch_response=True
         )
+        if resp.status_code is not 200:
+            print(
+                """
+                We see a bad {} response code at {} with the headers {}. Response is:
+                """.format(resp.status_code, resp.url, resp.headers, resp.content)
+            )
+            resp.failure()
         # we should have been redirected to
         # https://login.test.usajobs.gov/Access/Transition. Let's do a quick check.
         if resp.url is not "https://login.test.usajobs.gov/Access/Transition":
@@ -411,9 +422,7 @@ class UserBehavior(locust.TaskSet):
 
         # Now that we've confirmed, log in.
         credentials = random_cred()        
-        resp = login(self, credentials)
-        print("post login, we're at {}".format(resp.url))
-
+        login(self, credentials)
         change_pass(self, "thisisanewpass")
         # now change it back.
         change_pass(self, credentials['password'])
@@ -444,12 +453,29 @@ class UserBehavior(locust.TaskSet):
         """
         resp = self.client.get('https://www.test.usajobs.gov/')
         resp.raise_for_status()
-        resp = self.client.get('https://www.test.usajobs.gov/Applicant/ProfileDashboard/Home')
-        resp.raise_for_status()
+        resp = self.client.get(
+            'https://www.test.usajobs.gov/Applicant/ProfileDashboard/Home',
+            catch_response=True
+        )
+        if resp.status_code is not 200:
+            print(
+                """
+                We see a bad {} response code at {} with the headers {}. Response is:
+                """.format(resp.status_code, resp.url, resp.headers, resp.content)
+            )
+            resp.raise_for_status()
         # A quick post is required to setup for the SP handshake.
         # We'll pass the response url to signup()
-        resp = self.client.post('https://login.test.usajobs.gov/Access/Transition')
-        resp.raise_for_status()
+        resp = self.client.post(
+            'https://login.test.usajobs.gov/Access/Transition',
+            catch_response=True
+        )
+        if resp.status_code is not 200:
+            resp.failure(
+                """
+                We see a bad {} response code at {} with the headers {}. Response is:
+                """.format(resp.status_code, resp.url, resp.headers, resp.content)
+            )
         signup(self, resp.url)
         
         # Unless we said not to, sign out now.
