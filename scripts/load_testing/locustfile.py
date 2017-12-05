@@ -77,7 +77,7 @@ def login(t, credentials):
             'user[password]': credentials['password'],
             'authenticity_token': authenticity_token(dom),
             'commit': 'Submit',
-        }
+        },
     )
     resp.raise_for_status()
     
@@ -149,7 +149,7 @@ def logout(t):
         resp.raise_for_status()
         dom = pyquery.PyQuery(resp.content)
     except Exception as error:
-        print(error)
+        print("There was an error logging out at {}: {}".format(resp.url, error))
 
 def change_pass(t, password):
     """
@@ -364,7 +364,7 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    @locust.task(70)
+    #@locust.task(70)
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
@@ -387,12 +387,11 @@ class UserBehavior(locust.TaskSet):
             catch_response=True
         )
         if resp.status_code is not 200:
-            print(
+            resp.failure(
                 """
                 We see a bad {} response code at {} with the headers {}. Response is:
                 """.format(resp.status_code, resp.url, resp.headers, resp.content)
             )
-            resp.failure()
         # we should have been redirected to
         # https://login.test.usajobs.gov/Access/Transition. Let's do a quick check.
         if resp.url is not "https://login.test.usajobs.gov/Access/Transition":
@@ -408,7 +407,8 @@ class UserBehavior(locust.TaskSet):
         resp = self.client.post(
             resp.url,
             catch_response=True,
-            data = {}
+            data = {},
+            name="/Access/Transition"
         )
         # Check to make sure we redirected to our target host, 
         # with a request_id in resp.url
@@ -439,7 +439,7 @@ class UserBehavior(locust.TaskSet):
         signup(self)
         logout(self)
 
-    @locust.task(25)
+    #@locust.task(25)
     def usajobs_create_account(self):
         """
         Create an account from within USAjobs test domain. 
