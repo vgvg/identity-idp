@@ -136,20 +136,22 @@ def logout(t):
     Takes a locustTask object and signs you out.
     Naively assumes the user is actually logged in already.
     """
-    resp = t.client.get('/')
+    resp = t.client.get(
+        '/',
+        catch_response=True
+    )
+    resp.raise_for_status()
+    dom = pyquery.PyQuery(resp.content)
+    sign_out_link = dom.find('a[href="/api/saml/logout"]')
+    if not sign_out_link:
+        resp.failure("no signout link at {}.format(resp.url))
+    # Authentication is now complete.
+    # We've confirmed by the presence of the sign-out link.
+    # We can now have the person sign out.
+    resp = t.client.get(sign_out_link.attr('href'))
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
 
-    try:
-        sign_out_link = dom.find('a[href="/api/saml/logout"]')
-        # Authentication is now complete.
-        # We've confirmed by the presence of the sign-out link.
-        # We can now have the person sign out.
-        resp = t.client.get(sign_out_link.attr('href'))
-        resp.raise_for_status()
-        dom = pyquery.PyQuery(resp.content)
-    except Exception as error:
-        print("There was an error logging out at {}: {}".format(resp.url, error))
 
 def change_pass(t, password):
     """
