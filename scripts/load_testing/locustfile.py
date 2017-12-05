@@ -142,13 +142,14 @@ def logout(t):
     )
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
-    sign_out_link = dom.find('a[href="/api/saml/logout"]')
+    sign_out_link = dom.find('a[href="/api/saml/logout"]').attr('href')
     if not sign_out_link:
-        resp.failure("no signout link at {}.format(resp.url))
+        resp.failure("No signout link at {}.".format(resp.url))
+        return
     # Authentication is now complete.
     # We've confirmed by the presence of the sign-out link.
     # We can now have the person sign out.
-    resp = t.client.get(sign_out_link.attr('href'))
+    resp = t.client.get(sign_out_link)
     resp.raise_for_status()
     dom = pyquery.PyQuery(resp.content)
 
@@ -366,7 +367,7 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    #@locust.task(70)
+    @locust.task(70)
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
@@ -441,7 +442,7 @@ class UserBehavior(locust.TaskSet):
         signup(self)
         logout(self)
 
-    #@locust.task(25)
+    @locust.task(25)
     def usajobs_create_account(self):
         """
         Create an account from within USAjobs test domain. 
