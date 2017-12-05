@@ -470,8 +470,10 @@ class UserBehavior(locust.TaskSet):
         # A quick post is required to setup for the SP handshake.
         # We'll pass the response url to signup()
         resp = self.client.post(
-            'https://login.test.usajobs.gov/Access/Transition',
-            catch_response=True
+            resp.url,
+            catch_response=True,
+            data = {},
+            name="/Access/Transition (create)"
         )
         if resp.status_code is not 200:
             resp.failure(
