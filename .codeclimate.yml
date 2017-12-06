@@ -40,6 +40,8 @@ engines:
       - HACK
       - BUG
       - XXX
+  pep8:
+    enabled: true
   reek:
     enabled: true
     exclude_paths:

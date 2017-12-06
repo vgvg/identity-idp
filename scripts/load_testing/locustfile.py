@@ -367,12 +367,17 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
+    # rubocop:disable MethodLength
     @locust.task(70)
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
 
         This is most common task and is heavily weighted.
+
+        We have disabled method linting because:
+        1. It counts arguments as separate lines.
+        2. This is how many steps it takes for the flow.
         """
         root_url = 'https://www.test.usajobs.gov'
         resp = self.client.get(
@@ -422,15 +427,14 @@ class UserBehavior(locust.TaskSet):
                 Instead, we are at {}.
                 """.format(resp.url)
             )
-
-        # Now that we've confirmed, log in.
         credentials = random_cred()        
         login(self, credentials)
         change_pass(self, "thisisanewpass")
         # now change it back.
         change_pass(self, credentials['password'])
         logout(self)
-
+    # rubocop:ensable MethodLength
+    
     @locust.task(2)
     def idp_create_account(self):
         """
@@ -442,6 +446,7 @@ class UserBehavior(locust.TaskSet):
         signup(self)
         logout(self)
 
+    # rubocop:disable MethodLength
     @locust.task(25)
     def usajobs_create_account(self):
         """
@@ -453,6 +458,10 @@ class UserBehavior(locust.TaskSet):
 
         If the os env var "NO_LOGOUT" has been set, this will skip 
         the logout step to help show the load of many open sessions.
+
+        We have disabled method linting because:
+        1. It counts arguments as separate lines
+        2. This is how many steps it takes for the flow.
         """
         resp = self.client.get('https://www.test.usajobs.gov/')
         resp.raise_for_status()
@@ -462,9 +471,9 @@ class UserBehavior(locust.TaskSet):
         )
         if resp.status_code is not 200:
             print(
-                """
-                We see a bad {} response code at {} with the headers {}. Response is:
-                """.format(resp.status_code, resp.url, resp.headers, resp.content)
+                "Bad {} response at {} with the headers {}: {}".format(
+                    resp.status_code, resp.url, resp.headers, resp.content
+                )
             )
             resp.raise_for_status()
         # A quick post is required to setup for the SP handshake.
@@ -476,11 +485,12 @@ class UserBehavior(locust.TaskSet):
             name="/Access/Transition (create)"
         )
         if resp.status_code is not 200:
-            resp.failure(
-                """
-                We see a bad {} response code at {} with the headers {}. Response is:
-                """.format(resp.status_code, resp.url, resp.headers, resp.content)
+            print(
+                "Bad {} response at {} with the headers {}: {}".format(
+                    resp.status_code, resp.url, resp.headers, resp.content
+                )
             )
+            resp.raise_for_status()
         signup(self, resp.url)
         
         # Unless we said not to, sign out now.
@@ -488,6 +498,7 @@ class UserBehavior(locust.TaskSet):
             print("Found 'NO_LOGOUT' in env vars. Skipping logout.")
         else:
             logout(self)
+    # rubocop:ensable MethodLength
 
 
 class WebsiteUser(locust.HttpLocust):
