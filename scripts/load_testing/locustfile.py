@@ -112,7 +112,7 @@ def login(t, credentials):
         # If we still don't have code, we have a bigger problem.
         if not code:
             print("""
-                No 2FA code found after two tries. 
+                No 2FA code found after two tries.
                 Make sure {} is in the DB
                 """.format(credentials)
                   )
@@ -175,7 +175,7 @@ def change_pass(t, password):
     except Exception as error:
         print("""
             There was a problem finding the edit pass link: {}
-            Most likely, you're hitting an OTP cap with this user, 
+            Most likely, you're hitting an OTP cap with this user,
             or did not run the rake task to generate users.
             Since we can't change the password, we'll exit.
             Here is the content we're seeing at {}: {}
@@ -238,7 +238,7 @@ def signup(t, signup_url=None):
     except IndexError:
         if '/account' in resp.url:
             print("""
-                Account appears to already be signed up and logged in. 
+                Account appears to already be signed up and logged in.
                 We're at {}.
                 """.format(resp.url)
                   )
@@ -294,7 +294,7 @@ def signup(t, signup_url=None):
         otp_code = dom.find('input[name="code"]')[0].attrib['value']
     except Exception as error:
         print("""
-            There is a problem creating this account: {}. 
+            There is a problem creating this account: {}.
             Here is the response content: {}
             """.format(error, resp.content))
         return
@@ -352,7 +352,7 @@ class UserBehavior(locust.TaskSet):
         """
         # TO-DO: submit the LOA1/LOA3 form
         # We can't do this from form action yet, because there's a mismatch
-        # in how we're handling the trailing slash on host in locust and elsewhere:
+        # in handling the trailing slash on host in locust and elsewhere:
         # in requests/models.py", line 371, in prepare_url
         #     scheme, auth, host, port, path, query, fragment = parse_url(url)
         # results in localhost:3000auth rather than localhost:3000/auth/saml/
@@ -406,9 +406,9 @@ class UserBehavior(locust.TaskSet):
         )
         if resp.status_code is not 200:
             resp.failure(
-                """
-                We see a bad {} response code at {} with the headers {}. Response is:
-                """.format(resp.status_code, resp.url, resp.headers, resp.content)
+                "Bad {} response at {} with headers {}. Response:".format(
+                    resp.status_code, resp.url, resp.headers, resp.content
+                )
             )
         # we should have been redirected to
         # https://login.test.usajobs.gov/Access/Transition. Let's do a quick
@@ -416,7 +416,7 @@ class UserBehavior(locust.TaskSet):
         if resp.url is not "https://login.test.usajobs.gov/Access/Transition":
             resp.failure(
                 """"
-                We do not appear to have been redirected to 
+                We do not appear to have been redirected to
                 https://login.test.usajobs.gov/Access/Transition.
                 Our current URL is {}, with content {}.
                 """.format(resp.url, resp.content)
@@ -461,13 +461,13 @@ class UserBehavior(locust.TaskSet):
     @locust.task(25)
     def usajobs_create_account(self):
         """
-        Create an account from within USAjobs test domain. 
+        Create an account from within USAjobs test domain.
 
         This is given a relatively low weight.
         It's much more common than account creation from within IDP
         but much lower than a simple login/logout.
 
-        If the os env var "NO_LOGOUT" has been set, this will skip 
+        If the os env var "NO_LOGOUT" has been set, this will skip
         the logout step to help show the load of many open sessions.
 
         We have disabled method linting because:
