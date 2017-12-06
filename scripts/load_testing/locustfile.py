@@ -46,30 +46,32 @@ def authenticity_token(dom):
     return dom.find('input[name="authenticity_token"]:first').attr('value')
 
 
+def resp_to_dom(resp):
+    """
+    Little helper to check response status is 200
+    and return the DOM, cause we do that a lot.
+    """
+    resp.raise_for_status()
+    return pyquery.PyQuery(resp.content)
+
+
 def login(t, credentials):
     """
     Takes a locustTask object and signs you in.
     """
-
-    # ensure we're at sign-in page and submit credentials
     resp = t.client.get('/', catch_response=True)
-    resp.raise_for_status()
-
     # If you're already logged in, it'll redirect to /account.
-    # We need to handle this, or you'll get all sorts of downstream failures.
+    # We need to handle this or you'll get all sorts of downstream failures.
     if '/account' in resp.url:
         print("You're' already logged in. We're going to quit login().")
         return resp
 
-    dom = pyquery.PyQuery(resp.content)
+    dom = resp_to_dom(resp)
     token = authenticity_token(dom)
 
-    if not token or "Sign in" not in dom.text():
+    if not token:
         resp.failure(
-            """
-            We don't appear to be on a sign-in page.
-            Current URL is {}.
-            """.format(resp.url)
+            "Not a sign-in page. Current URL is {}.".format(resp.url)
         )
 
     resp = t.client.post(
@@ -82,18 +84,12 @@ def login(t, credentials):
             'commit': 'Submit',
         },
     )
-    resp.raise_for_status()
-
-    dom = pyquery.PyQuery(resp.content)
-    code = dom.find("#code").attr('value')
-    if not code:
-        # if we didn't seen the code, then we probably have a failed login
-        # un-reset credentials. So let's try to rescue with the other pass.
-        print("we didn't see a 2FA code. Trying {} posting to {}".format(
-            credentials,
-            resp.url
-        )
-        )
+    dom = resp_to_dom(resp)
+    
+    if not dom.find("#code").attr('value'):
+        # if we didn't see the code, then it's probably a failed login
+        # due to un-reset credentials. 
+        # So let's try to rescue with the alternate pass.
         resp = t.client.post(
             resp.url,
             catch_response=True,
@@ -104,20 +100,16 @@ def login(t, credentials):
                 'commit': 'Submit',
             }
         )
-        resp.raise_for_status()
-
-        dom = pyquery.PyQuery(resp.content)
-        code = dom.find("#code").attr('value')
+        dom = resp_to_dom(resp)
 
         # If we still don't have code, we have a bigger problem.
-        if not code:
-            print("""
+        if not dom.find("#code").attr('value'):
+            resp.failure(
+                """
                 No 2FA code found after two tries.
-                Make sure {} is in the DB
+                Make sure {} is in the DB.
                 """.format(credentials)
-                  )
-            resp.failure("No 2FA code on {} using .".format(
-                resp.url, credentials))
+            )
             return
 
     code_form = dom.find("form[action='/login/two_factor/sms']")
@@ -129,7 +121,6 @@ def login(t, credentials):
             'commit': 'Submit'
         }
     )
-
     # We're not checking for post-login state here,
     # as it will vary depending on the SP.
     resp.raise_for_status()
@@ -145,9 +136,9 @@ def logout(t):
         '/',
         catch_response=True
     )
-    resp.raise_for_status()
-    dom = pyquery.PyQuery(resp.content)
+    dom = resp_to_dom(resp)
     sign_out_link = dom.find('a[href="/api/saml/logout"]').attr('href')
+    
     if not sign_out_link:
         resp.failure("No signout link at {}.".format(resp.url))
         return
@@ -156,7 +147,6 @@ def logout(t):
     # We can now have the person sign out.
     resp = t.client.get(sign_out_link)
     resp.raise_for_status()
-    dom = pyquery.PyQuery(resp.content)
 
 
 def change_pass(t, password):

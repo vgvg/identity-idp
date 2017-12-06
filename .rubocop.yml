@@ -48,7 +48,6 @@ Metrics/BlockLength:
     - 'config/routes.rb'
     - 'spec/**/*.rb'
     - 'config/initializers/active_job_logger_patch.rb'
-    - 'scripts/load_testing/*.py'
 
 Metrics/ClassLength:
   Description: Avoid classes longer than 100 lines of code.
