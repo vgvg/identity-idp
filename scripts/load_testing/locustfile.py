@@ -18,6 +18,7 @@ auth = (username, password) if username and password else ()
 # for the DB by the rake task.
 NUM_USERS = 100
 
+
 def random_cred():
     """
     Given the rake task:
@@ -37,11 +38,13 @@ def random_cred():
         'password': "salty pickles"
     }
 
+
 def authenticity_token(dom):
     """
     Retrieves the CSRF auth token from the DOM for submission
     """
     return dom.find('input[name="authenticity_token"]:first').attr('value')
+
 
 def login(t, credentials):
     """
@@ -55,7 +58,7 @@ def login(t, credentials):
     # If you're already logged in, it'll redirect to /account.
     # We need to handle this, or you'll get all sorts of downstream failures.
     if '/account' in resp.url:
-        print("You appear to be already logged in. We're going to quit login().")
+        print("You're' already logged in. We're going to quit login().")
         return resp
 
     dom = pyquery.PyQuery(resp.content)
@@ -86,7 +89,7 @@ def login(t, credentials):
     if not code:
         # if we didn't seen the code, then we probably have a failed login 
         # un-reset credentials. So let's try to rescue with the other pass.
-        print("we didn't see a 2FA code. Trying again, with {} posting to {}".format(
+        print("we didn't see a 2FA code. Trying {} posting to {}".format(
             credentials,
             resp.url
             )
@@ -130,6 +133,7 @@ def login(t, credentials):
     # as it will vary depending on the SP.
     resp.raise_for_status()
     return resp
+
 
 def logout(t):
     """
@@ -196,6 +200,7 @@ def change_pass(t, password):
         # To-do: handle reauthn case
         print("Failed to find correct page. Currently at {}".format(resp.url))
 
+
 def signup(t, signup_url=None):
     """
     Creates a new account.
@@ -213,10 +218,10 @@ def signup(t, signup_url=None):
         t.client.get('/sign_up/start', auth=auth)
     resp = t.client.get('/sign_up/enter_email', auth=auth)
     resp.raise_for_status()
-
+    token = authenticity_token(pyquery.PyQuery(resp.content))
     data = {
         'user[email]': 'test+' + fake.md5() + '@test.com',
-        'authenticity_token': authenticity_token(pyquery.PyQuery(resp.content)),
+        'authenticity_token': token,
         'commit': 'Submit',
     }
     resp = t.client.post(
