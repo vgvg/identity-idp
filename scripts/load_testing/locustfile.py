@@ -54,7 +54,7 @@ def login(t, credentials):
     # ensure we're at sign-in page and submit credentials
     resp = t.client.get('/', catch_response=True)
     resp.raise_for_status()
-    
+
     # If you're already logged in, it'll redirect to /account.
     # We need to handle this, or you'll get all sorts of downstream failures.
     if '/account' in resp.url:
@@ -63,7 +63,7 @@ def login(t, credentials):
 
     dom = pyquery.PyQuery(resp.content)
     token = authenticity_token(dom)
-    
+
     if not token or "Sign in" not in dom.text():
         resp.failure(
             """
@@ -71,11 +71,11 @@ def login(t, credentials):
             Current URL is {}.
             """.format(resp.url)
         )
-    
+
     resp = t.client.post(
         resp.url,
         catch_response=True,
-        data = {
+        data={
             'user[email]': credentials['email'],
             'user[password]': credentials['password'],
             'authenticity_token': authenticity_token(dom),
@@ -83,21 +83,21 @@ def login(t, credentials):
         },
     )
     resp.raise_for_status()
-    
+
     dom = pyquery.PyQuery(resp.content)
     code = dom.find("#code").attr('value')
     if not code:
-        # if we didn't seen the code, then we probably have a failed login 
+        # if we didn't seen the code, then we probably have a failed login
         # un-reset credentials. So let's try to rescue with the other pass.
         print("we didn't see a 2FA code. Trying {} posting to {}".format(
             credentials,
             resp.url
-            )
+        )
         )
         resp = t.client.post(
             resp.url,
             catch_response=True,
-            data = {
+            data={
                 'user[email]': credentials['email'],
                 'user[password]': 'thisisanewpass',
                 'authenticity_token': authenticity_token(dom),
@@ -105,31 +105,32 @@ def login(t, credentials):
             }
         )
         resp.raise_for_status()
-        
+
         dom = pyquery.PyQuery(resp.content)
         code = dom.find("#code").attr('value')
-        
+
         # If we still don't have code, we have a bigger problem.
         if not code:
             print("""
                 No 2FA code found after two tries. 
                 Make sure {} is in the DB
                 """.format(credentials)
-            )
-            resp.failure("No 2FA code on {} using .".format(resp.url, credentials))
+                  )
+            resp.failure("No 2FA code on {} using .".format(
+                resp.url, credentials))
             return
 
     code_form = dom.find("form[action='/login/two_factor/sms']")
     resp = t.client.post(
         code_form.attr('action'),
-        data = {
+        data={
             'code': code,
             'authenticity_token': authenticity_token(dom),
             'commit': 'Submit'
         }
     )
-    
-    # We're not checking for post-login state here, 
+
+    # We're not checking for post-login state here,
     # as it will vary depending on the SP.
     resp.raise_for_status()
     return resp
@@ -179,7 +180,7 @@ def change_pass(t, password):
             Since we can't change the password, we'll exit.
             Here is the content we're seeing at {}: {}
             """.format(error, resp.url, dom('.container').eq(0).text())
-        )
+              )
         return
 
     resp.raise_for_status()
@@ -188,7 +189,7 @@ def change_pass(t, password):
     if '/manage/password' in resp.url:
         resp = t.client.post(
             resp.url,
-            data = {
+            data={
                 'update_user_password_form[password]': password,
                 'authenticity_token': authenticity_token(dom),
                 '_method': 'patch',
@@ -240,8 +241,8 @@ def signup(t, signup_url=None):
                 Account appears to already be signed up and logged in. 
                 We're at {}.
                 """.format(resp.url)
-            )
-        else: 
+                  )
+        else:
             print("""
                 Failed to get confirmation token.
                 Consult https://github.com/18F/identity-idp#load-testing
@@ -249,7 +250,7 @@ def signup(t, signup_url=None):
 
                 We were at {} when we couldn't find it.
                 """.format(resp.url)
-            )
+                  )
         return
 
     # Follow email confirmation link and submit password
@@ -261,7 +262,8 @@ def signup(t, signup_url=None):
     resp.raise_for_status()
 
     dom = pyquery.PyQuery(resp.content)
-    confirmation_token = dom.find('[name="confirmation_token"]')[0].attrib['value']
+    confirmation_token = dom.find('[name="confirmation_token"]')[
+        0].attrib['value']
     data = {
         'password_form[password]': 'salty pickles',
         'authenticity_token': authenticity_token(dom),
@@ -278,7 +280,7 @@ def signup(t, signup_url=None):
     data = {
         '_method': 'patch',
         'user_phone_form[international_code]': 'US',
-        'user_phone_form[phone]': phone_numbers[randint(1,1000)],
+        'user_phone_form[phone]': phone_numbers[randint(1, 1000)],
         'user_phone_form[otp_delivery_preference]': 'sms',
         'authenticity_token': authenticity_token(dom),
         'commit': 'Send security code',
@@ -315,6 +317,7 @@ def signup(t, signup_url=None):
 
 
 class UserBehavior(locust.TaskSet):
+
     def on_start(self):
         pass
 
@@ -390,10 +393,12 @@ class UserBehavior(locust.TaskSet):
             catch_response=True
         )
         dom = pyquery.PyQuery(resp.content)
-        signin_link = dom.find('a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
+        signin_link = dom.find(
+            'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
 
         if not signin_link:
-            resp.failure("We could not find a signin link at {}".format(resp.url))
+            resp.failure(
+                "We could not find a signin link at {}".format(resp.url))
 
         resp = self.client.get(
             root_url + signin_link[0].attrib['href'],
@@ -406,7 +411,8 @@ class UserBehavior(locust.TaskSet):
                 """.format(resp.status_code, resp.url, resp.headers, resp.content)
             )
         # we should have been redirected to
-        # https://login.test.usajobs.gov/Access/Transition. Let's do a quick check.
+        # https://login.test.usajobs.gov/Access/Transition. Let's do a quick
+        # check.
         if resp.url is not "https://login.test.usajobs.gov/Access/Transition":
             resp.failure(
                 """"
@@ -420,26 +426,26 @@ class UserBehavior(locust.TaskSet):
         resp = self.client.post(
             resp.url,
             catch_response=True,
-            data = {},
+            data={},
             name="/Access/Transition"
         )
-        # Check to make sure we redirected to our target host, 
+        # Check to make sure we redirected to our target host,
         # with a request_id in resp.url
-        if resp.url is not os.getenv('TARGET_HOST'):  
+        if resp.url is not os.getenv('TARGET_HOST'):
             resp.failure(
                 """"
                 We do not appear to have been redirected to the IDP host.
                 Instead, we are at {}.
                 """.format(resp.url)
             )
-        credentials = random_cred()        
+        credentials = random_cred()
         login(self, credentials)
         change_pass(self, "thisisanewpass")
         # now change it back.
         change_pass(self, credentials['password'])
         logout(self)
     # rubocop:ensable MethodLength
-    
+
     @locust.task(2)
     def idp_create_account(self):
         """
@@ -486,7 +492,7 @@ class UserBehavior(locust.TaskSet):
         resp = self.client.post(
             resp.url,
             catch_response=True,
-            data = {},
+            data={},
             name="/Access/Transition (create)"
         )
         if resp.status_code is not 200:
@@ -497,7 +503,7 @@ class UserBehavior(locust.TaskSet):
             )
             resp.raise_for_status()
         signup(self, resp.url)
-        
+
         # Unless we said not to, sign out now.
         if "NO_LOGOUT" in os.environ:
             print("Found 'NO_LOGOUT' in env vars. Skipping logout.")
