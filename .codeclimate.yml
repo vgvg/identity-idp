@@ -1,5 +1,3 @@
-exclude_paths:
-  - 'scripts/load_testing/locustfile.py'
 engines:
   brakeman:
     enabled: true
