@@ -53,8 +53,7 @@ engines:
     enabled: true
   scss-lint:
     enabled: true
-exclude_paths:
-    - 'scripts/load_testing/*.py'
+    
 ratings:
   paths:
   - app/**
@@ -64,3 +63,4 @@ ratings:
   exclude_paths:
     - 'lib/user_flow_exporter.rb'
     - 'lib/rspec/formatters/user_flow_formatter.rb'
+    - 'scripts/load_testing/*.py'
