@@ -42,6 +42,10 @@ engines:
       - XXX
   pep8:
     enabled: true
+  radon:
+    enabled: true
+    exclude_paths:
+      - 'scripts/load_testing/locustfile.py'
   reek:
     enabled: true
     exclude_paths:
@@ -63,4 +67,3 @@ ratings:
   exclude_paths:
     - 'lib/user_flow_exporter.rb'
     - 'lib/rspec/formatters/user_flow_formatter.rb'
-    - 'scripts/load_testing/*.py'
