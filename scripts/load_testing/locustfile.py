@@ -368,7 +368,6 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    # rubocop:disable MethodLength
     @locust.task(70)
     def usajobs_change_pass(self):
         """
@@ -439,7 +438,6 @@ class UserBehavior(locust.TaskSet):
         # now change it back.
         change_pass(self, credentials['password'])
         logout(self)
-    # rubocop:ensable MethodLength
 
     @locust.task(2)
     def idp_create_account(self):
@@ -452,7 +450,6 @@ class UserBehavior(locust.TaskSet):
         signup(self)
         logout(self)
 
-    # rubocop:disable MethodLength
     @locust.task(25)
     def usajobs_create_account(self):
         """
@@ -504,7 +501,6 @@ class UserBehavior(locust.TaskSet):
             print("Found 'NO_LOGOUT' in env vars. Skipping logout.")
         else:
             logout(self)
-    # rubocop:ensable MethodLength
 
 
 class WebsiteUser(locust.HttpLocust):
