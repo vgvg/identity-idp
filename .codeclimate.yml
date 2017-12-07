@@ -53,7 +53,8 @@ engines:
     enabled: true
   scss-lint:
     enabled: true
-
+exclude_paths:
+    - 'scripts/load_testing/*.py'
 ratings:
   paths:
   - app/**
