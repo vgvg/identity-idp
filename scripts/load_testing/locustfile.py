@@ -85,10 +85,11 @@ def login(t, credentials):
         },
     )
     dom = resp_to_dom(resp)
-    
-    if not dom.find("#code").attr('value'):
+    code = dom.find("#code").attr('value')
+
+    if not code:
         # if we didn't see the code, then it's probably a failed login
-        # due to un-reset credentials. 
+        # due to un-reset credentials.
         # So let's try to rescue with the alternate pass.
         resp = t.client.post(
             resp.url,
@@ -101,9 +102,10 @@ def login(t, credentials):
             }
         )
         dom = resp_to_dom(resp)
+        code = dom.find("#code").attr('value')
 
         # If we still don't have code, we have a bigger problem.
-        if not dom.find("#code").attr('value'):
+        if not code:
             resp.failure(
                 """
                 No 2FA code found after two tries.
@@ -138,7 +140,7 @@ def logout(t):
     )
     dom = resp_to_dom(resp)
     sign_out_link = dom.find('a[href="/api/saml/logout"]').attr('href')
-    
+
     if not sign_out_link:
         resp.failure("No signout link at {}.".format(resp.url))
         return
@@ -154,10 +156,8 @@ def change_pass(t, password):
     Takes a locustTask and naively expects an already logged in person,
     this navigates to the account (which they should already be on, post-login)
     """
-
     resp = t.client.get('/account')
-    resp.raise_for_status()
-    dom = pyquery.PyQuery(resp.content)
+    dom = resp_to_dom(resp)
     edit_link = dom.find('a[href="/manage/password"]')
 
     try:
@@ -165,7 +165,7 @@ def change_pass(t, password):
     except Exception as error:
         print("""
             There was a problem finding the edit pass link: {}
-            Most likely, you're hitting an OTP cap with this user,
+            You may be hitting an OTP cap with this user,
             or did not run the rake task to generate users.
             Since we can't change the password, we'll exit.
             Here is the content we're seeing at {}: {}
@@ -173,9 +173,8 @@ def change_pass(t, password):
               )
         return
 
-    resp.raise_for_status()
-    dom = pyquery.PyQuery(resp.content)
-    # To keep it simple for now we're skipping reauth
+    dom = resp_to_dom(resp)
+    # To keep it simple for now we're skipping reauthn
     if '/manage/password' in resp.url:
         resp = t.client.post(
             resp.url,
@@ -194,11 +193,11 @@ def change_pass(t, password):
 
 def signup(t, signup_url=None):
     """
-    Creates a new account.
+    Creates a new account, starting at the home page,
+    then navigating to create account page and submit email
+
+    We're checking for signup_url to pass name and group results
     """
-    # start at home page,
-    # then navigate to create account page and submit email
-    # we're checking for signup_url to pass name and group results
     if signup_url:
         t.client.get(
             signup_url,
@@ -208,39 +207,38 @@ def signup(t, signup_url=None):
     else:
         t.client.get('/sign_up/start', auth=auth)
     resp = t.client.get('/sign_up/enter_email', auth=auth)
-    resp.raise_for_status()
-    token = authenticity_token(pyquery.PyQuery(resp.content))
-    data = {
-        'user[email]': 'test+' + fake.md5() + '@test.com',
-        'authenticity_token': token,
-        'commit': 'Submit',
-    }
+    dom = resp_to_dom(resp)
+
     resp = t.client.post(
         '/sign_up/enter_email',
-        data=data,
-        auth=auth
+        data={
+            'user[email]': 'test+' + fake.md5() + '@test.com',
+            'authenticity_token': authenticity_token(dom),
+            'commit': 'Submit',
+        },
+        auth=auth,
+        catch_response=True
     )
-    resp.raise_for_status()
+    dom = resp_to_dom(resp)
 
-    dom = pyquery.PyQuery(resp.content)
     try:
         link = dom.find("a[href*='confirmation_token']")[0].attrib['href']
     except IndexError:
         if '/account' in resp.url:
-            print("""
+            resp.failure(
+                """
                 Account appears to already be signed up and logged in.
-                We're at {}.
+                Current URL: {}.
                 """.format(resp.url)
-                  )
+            )
         else:
-            print("""
+            resp.failure(
+                """
                 Failed to get confirmation token.
                 Consult https://github.com/18F/identity-idp#load-testing
-                and check your application config.
-
-                We were at {} when we couldn't find it.
+                and check your application config. Current URL:
                 """.format(resp.url)
-                  )
+            )
         return
 
     # Follow email confirmation link and submit password
@@ -249,61 +247,66 @@ def signup(t, signup_url=None):
         auth=auth,
         name='/sign_up/email/confirm?confirmation_token='
     )
-    resp.raise_for_status()
+    dom = resp_to_dom(resp)
 
-    dom = pyquery.PyQuery(resp.content)
-    confirmation_token = dom.find('[name="confirmation_token"]')[
-        0].attrib['value']
+    token = dom.find('[name="confirmation_token"]')[0].attrib['value']
     data = {
         'password_form[password]': 'salty pickles',
         'authenticity_token': authenticity_token(dom),
-        'confirmation_token': confirmation_token,
+        'confirmation_token': token,
         'commit': 'Submit',
     }
     resp = t.client.post(
         '/sign_up/create_password', data=data, auth=auth
     )
-    resp.raise_for_status()
+    dom = resp_to_dom(resp)
 
     # visit phone setup page and submit phone number
-    dom = pyquery.PyQuery(resp.content)
-    data = {
-        '_method': 'patch',
-        'user_phone_form[international_code]': 'US',
-        'user_phone_form[phone]': phone_numbers[randint(1, 1000)],
-        'user_phone_form[otp_delivery_preference]': 'sms',
-        'authenticity_token': authenticity_token(dom),
-        'commit': 'Send security code',
-    }
-    resp = t.client.post('/phone_setup', data=data, auth=auth)
-    resp.raise_for_status()
+    resp = t.client.post(
+        '/phone_setup',
+        data={
+            '_method': 'patch',
+            'user_phone_form[international_code]': 'US',
+            'user_phone_form[phone]': phone_numbers[randint(1, 1000)],
+            'user_phone_form[otp_delivery_preference]': 'sms',
+            'authenticity_token': authenticity_token(dom),
+            'commit': 'Send security code',
+        },
+        auth=auth,
+        catch_response=True
+    )
+    dom = resp_to_dom(resp)
 
-    # visit security code page and submit pre-filled OTP
-    dom = pyquery.PyQuery(resp.content)
     try:
         otp_code = dom.find('input[name="code"]')[0].attrib['value']
     except Exception as error:
-        print("""
+        resp.failure("""
             There is a problem creating this account: {}.
             Here is the response content: {}
             """.format(error, resp.content))
         return
 
-    data = {
-        'code': otp_code,
-        'authenticity_token': authenticity_token(dom),
-        'commit': 'Submit',
-    }
-    resp = t.client.post('/login/two_factor/sms', data=data, auth=auth)
-    resp.raise_for_status()
+    # visit security code page and submit pre-filled OTP
+    resp = t.client.post(
+        '/login/two_factor/sms',
+        data={
+            'code': otp_code,
+            'authenticity_token': authenticity_token(dom),
+            'commit': 'Submit',
+        },
+        auth=auth
+    )
+    dom = resp_to_dom(resp)
 
     # click Continue on personal key page
-    dom = pyquery.PyQuery(resp.content)
-    data = {
-        'authenticity_token': authenticity_token(dom),
-        'commit': 'Continue',
-    }
-    t.client.post('/sign_up/personal_key', data=data, auth=auth)
+    t.client.post(
+        '/sign_up/personal_key',
+        data={
+            'authenticity_token': authenticity_token(dom),
+            'commit': 'Continue',
+        },
+        auth=auth
+    )
 
 
 class UserBehavior(locust.TaskSet):
@@ -403,7 +406,7 @@ class UserBehavior(locust.TaskSet):
         # we should have been redirected to
         # https://login.test.usajobs.gov/Access/Transition. Let's do a quick
         # check.
-        if resp.url is not "https://login.test.usajobs.gov/Access/Transition":
+        if "https://login.test.usajobs.gov/Access/Transition" not in resp.url:
             resp.failure(
                 """"
                 We do not appear to have been redirected to
@@ -411,6 +414,7 @@ class UserBehavior(locust.TaskSet):
                 Our current URL is {}, with content {}.
                 """.format(resp.url, resp.content)
             )
+            return
         # Now that we've confirmed we're at the right URL
         # we need to POST to it, per USAjobs.
         resp = self.client.post(
@@ -428,6 +432,7 @@ class UserBehavior(locust.TaskSet):
                 Instead, we are at {}.
                 """.format(resp.url)
             )
+            return
         credentials = random_cred()
         login(self, credentials)
         change_pass(self, "thisisanewpass")
@@ -471,7 +476,7 @@ class UserBehavior(locust.TaskSet):
             catch_response=True
         )
         if resp.status_code is not 200:
-            print(
+            resp.failure(
                 "Bad {} response at {} with the headers {}: {}".format(
                     resp.status_code, resp.url, resp.headers, resp.content
                 )
@@ -486,9 +491,9 @@ class UserBehavior(locust.TaskSet):
             name="/Access/Transition (create)"
         )
         if resp.status_code is not 200:
-            print(
-                "Bad {} response at {} with the headers {}: {}".format(
-                    resp.status_code, resp.url, resp.headers, resp.content
+            resp.failure(
+                "Bad {} response at {} with the headers {}".format(
+                    resp.status_code, resp.url, resp.headers
                 )
             )
             resp.raise_for_status()
