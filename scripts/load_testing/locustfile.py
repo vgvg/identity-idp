@@ -329,6 +329,15 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
+    @locust.task(50)
+    def idp_login_logout(self):
+        """
+        Login and logout from IDP. Very simple, but very common.
+        """
+        credentials = random_cred()
+        login(self, credentials)
+        logout(self)
+
     @locust.task(2)
     def sp_rails_change_pass(self):
         """
@@ -339,8 +348,7 @@ class UserBehavior(locust.TaskSet):
         it to be a common pattern in the real world.
         """
         resp = self.client.get('http://localhost:3003')
-        resp.raise_for_status()
-        dom = pyquery.PyQuery(resp.content)
+        dom = resp_to_dom(resp)
 
         """
         # TO-DO: submit the LOA1/LOA3 form
@@ -368,23 +376,17 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
-    @locust.task(70)
+    @locust.task(10)
     def usajobs_change_pass(self):
         """
         Login, change pass, change it back and logout from USAjobs.
-
-        This is most common task and is heavily weighted.
-
-        We have disabled method linting because:
-        1. It counts arguments as separate lines.
-        2. This is how many steps it takes for the flow.
         """
         root_url = 'https://www.test.usajobs.gov'
         resp = self.client.get(
             root_url,
             catch_response=True
         )
-        dom = pyquery.PyQuery(resp.content)
+        dom = resp_to_dom(resp)
         signin_link = dom.find(
             'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
 
@@ -439,6 +441,71 @@ class UserBehavior(locust.TaskSet):
         change_pass(self, credentials['password'])
         logout(self)
 
+    @locust.task(70)
+    def usajobs_login_logout(self):
+        """
+        Login andlogout from USAjobs.
+
+        This is a very common task and is heavily weighted.
+         """
+        root_url = 'https://www.test.usajobs.gov'
+        resp = self.client.get(
+            root_url,
+            catch_response=True
+        )
+        dom = resp_to_dom(resp)
+        signin_link = dom.find(
+            'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
+
+        if not signin_link:
+            resp.failure(
+                "We could not find a signin link at {}".format(resp.url)
+            )
+
+        resp = self.client.get(
+            root_url + signin_link[0].attrib['href'],
+            catch_response=True
+        )
+        if resp.status_code is not 200:
+            resp.failure(
+                "Bad {} response at {} with headers {}. Response:".format(
+                    resp.status_code, resp.url, resp.headers, resp.content
+                )
+            )
+        # we should have been redirected to
+        # https://login.test.usajobs.gov/Access/Transition.
+        # Let's do a quick check.
+        if "https://login.test.usajobs.gov/Access/Transition" not in resp.url:
+            resp.failure(
+                """"
+                We do not appear to have been redirected to
+                https://login.test.usajobs.gov/Access/Transition.
+                Our current URL is {}, with content {}.
+                """.format(resp.url, resp.content)
+            )
+            return
+        # Now that we've confirmed we're at the right URL
+        # we need to POST to it, per USAjobs.
+        resp = self.client.post(
+            resp.url,
+            catch_response=True,
+            data={},
+            name="/Access/Transition"
+        )
+        # Check to make sure we redirected to our target host,
+        # with a request_id in resp.url
+        if resp.url is not os.getenv('TARGET_HOST'):
+            resp.failure(
+                """"
+                We do not appear to have been redirected to the IDP host.
+                Instead, we are at {}.
+                """.format(resp.url)
+            )
+            return
+        credentials = random_cred()
+        login(self, credentials)
+        logout(self)
+
     @locust.task(2)
     def idp_create_account(self):
         """
@@ -450,7 +517,7 @@ class UserBehavior(locust.TaskSet):
         signup(self)
         logout(self)
 
-    @locust.task(25)
+    #@locust.task(25)
     def usajobs_create_account(self):
         """
         Create an account from within USAjobs test domain.
