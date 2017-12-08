@@ -61,7 +61,8 @@ def login(t, credentials):
     """
     with t.client.get('/', catch_response=True) as resp:
         # If you're already logged in, it'll redirect to /account.
-        # We need to handle this or you'll get all sorts of downstream failures.
+        # We need to handle this or you'll get all sorts of
+        # downstream failures.
         if '/account' in resp.url:
             print("You're' already logged in. We're going to quit login().")
             return resp
@@ -549,7 +550,7 @@ class UserBehavior(locust.TaskSet):
                 resp.raise_for_status()
         # A quick post is required to setup for the SP handshake.
         # We'll pass the response url to signup()
-        # Note that you *must* cast to the with syntax or 
+        # Note that you *must* cast to the "with" syntax or
         # catch_response will do bad, bad things.
         handshake_post = self.client.post(
             resp.url,
