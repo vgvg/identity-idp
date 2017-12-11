@@ -40,7 +40,8 @@ class UserDecorator
   end
 
   def active_identity_for(service_provider)
-    user.active_identities.find_by(service_provider: service_provider.issuer)
+    issuer = service_provider.attributes['issuer']
+    identity = user.active_identities.find_by(service_provider: issuer)
   end
 
   def active_or_pending_profile

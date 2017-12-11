@@ -14,9 +14,10 @@ class SamlIdpController < ApplicationController
 
   def auth
     return confirm_two_factor_authenticated(request_id) unless user_fully_authenticated?
-    process_fully_authenticated_user do |needs_idv, needs_profile_finish|
+    process_fully_authenticated_user do |needs_idv, needs_profile_finish, needs_show_attributes|
       return store_location_and_redirect_to(verify_url) if needs_idv && !needs_profile_finish
       return store_location_and_redirect_to(account_or_verify_profile_url) if needs_profile_finish
+      return store_location_and_redirect_to(sign_up_completed_url(nsp: 1)) if needs_show_attributes
     end
     delete_branded_experience
     render_template_for(saml_response, saml_request.response_url, 'SAMLResponse')
@@ -40,6 +41,7 @@ class SamlIdpController < ApplicationController
   private
 
   def process_fully_authenticated_user
+    needs_show_attributes = identity_show_attributes?
     link_identity_from_session_data
 
     needs_idv = identity_needs_verification?
@@ -47,7 +49,7 @@ class SamlIdpController < ApplicationController
     analytics_payload =  @result.to_h.merge(idv: needs_idv, finish_profile: needs_profile_finish)
     analytics.track_event(Analytics::SAML_AUTH, analytics_payload)
 
-    yield needs_idv, needs_profile_finish
+    yield needs_idv, needs_profile_finish, needs_show_attributes
   end
 
   def store_location_and_redirect_to(url)

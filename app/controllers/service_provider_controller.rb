@@ -1,5 +1,13 @@
 class ServiceProviderController < ApplicationController
   protect_from_forgery with: :null_session
+  include SecureHeadersConcern
+
+  before_action :verify_confirmed, if: :loa3?, only: :show
+  before_action :apply_secure_headers_override, only: :show
+
+  def show
+    
+  end
 
   def update
     authorize do

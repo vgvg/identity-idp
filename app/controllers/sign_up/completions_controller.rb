@@ -38,6 +38,7 @@ module SignUp
     def view_model
       SignUpCompletionsShow.new(
         loa3_requested: loa3?,
+        handoff: sp_handoff?,
         decorated_session: decorated_session,
         current_user: current_user
       )
@@ -49,6 +50,10 @@ module SignUp
 
     def loa3?
       sp_session[:loa3] == true
+    end
+
+    def sp_handoff?
+      params[:nsp]
     end
 
     def service_provider_attributes
