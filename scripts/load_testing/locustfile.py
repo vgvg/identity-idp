@@ -8,6 +8,8 @@ import pyquery
 
 import foney
 
+import datetime
+
 fake = Factory.create()
 phone_numbers = foney.phone_numbers()
 
@@ -39,11 +41,17 @@ def random_cred():
     }
 
 
-def authenticity_token(dom):
+def authenticity_token(dom, id=None):
     """
-    Retrieves the CSRF auth token from the DOM for submission
+    Retrieves the CSRF auth token from the DOM for submission.
+    If you need to differentiate between multiple CSRF tokens on one page,
+    pass the optional ID of the parent form (with hash)
     """
-    return dom.find('input[name="authenticity_token"]:first').attr('value')
+    selector = 'input[name="authenticity_token"]:first'
+
+    if id:
+        selector = '{} {}'.format(id, selector)
+    return dom.find(selector).attr('value')
 
 
 def resp_to_dom(resp):
@@ -64,7 +72,7 @@ def login(t, credentials):
         # We need to handle this or you'll get all sorts of
         # downstream failures.
         if '/account' in resp.url:
-            print("You're' already logged in. We're going to quit login().")
+            print("You're already logged in. We're going to quit login().")
             return resp
 
         dom = resp_to_dom(resp)
@@ -130,15 +138,14 @@ def login(t, credentials):
     return resp
 
 
-def logout(t):
+def logout(t, page="/"):
     """
     Takes a locustTask object and signs you out.
     Naively assumes the user is actually logged in already.
     """
-    with t.client.get('/', catch_response=True) as resp:
+    with t.client.get(page, catch_response=True) as resp:
         dom = resp_to_dom(resp)
         sign_out_link = dom.find('a[href="/api/saml/logout"]').attr('href')
-
         if not sign_out_link:
             resp.failure("No signout link at {}.".format(resp.url))
             return
@@ -161,14 +168,15 @@ def change_pass(t, password):
     try:
         resp = t.client.get(edit_link[0].attrib['href'])
     except Exception as error:
-        print("""
+        resp.failure(
+            """
             There was a problem finding the edit pass link: {}
             You may be hitting an OTP cap with this user,
             or did not run the rake task to generate users.
             Since we can't change the password, we'll exit.
             Here is the content we're seeing at {}: {}
             """.format(error, resp.url, dom('.container').eq(0).text())
-              )
+        )
         return
 
     dom = resp_to_dom(resp)
@@ -186,7 +194,7 @@ def change_pass(t, password):
         resp.raise_for_status()
     else:
         # To-do: handle reauthn case
-        print("Failed to find correct page. Currently at {}".format(resp.url))
+        resp.failure("Wrong redirect. Currently at {}".format(resp.url))
 
 
 def signup(t, signup_url=None):
@@ -196,6 +204,9 @@ def signup(t, signup_url=None):
 
     We're checking for signup_url to pass name and group results
     """
+    new_email = 'test+{}@test.com'.format(fake.md5())
+    default_password = "salty pickles"
+
     if signup_url:
         t.client.get(
             signup_url,
@@ -210,7 +221,7 @@ def signup(t, signup_url=None):
     email_resp = t.client.post(
         '/sign_up/enter_email',
         data={
-            'user[email]': 'test+' + fake.md5() + '@test.com',
+            'user[email]': new_email,
             'authenticity_token': authenticity_token(dom),
             'commit': 'Submit',
         },
@@ -247,13 +258,13 @@ def signup(t, signup_url=None):
         name='/sign_up/email/confirm?confirmation_token='
     )
     dom = resp_to_dom(resp)
-    token = dom.find('[name="confirmation_token"]')[0].attrib['value']
+    token = dom.find('[name="confirmation_token"]:first').attr('value')
 
     # Got to password page and submit
     resp = t.client.post(
         '/sign_up/create_password',
         data={
-            'password_form[password]': 'salty pickles',
+            'password_form[password]': default_password,
             'authenticity_token': authenticity_token(dom),
             'confirmation_token': token,
             'commit': 'Submit',
@@ -261,32 +272,35 @@ def signup(t, signup_url=None):
         auth=auth
     )
 
-    # May need a page confirmation/DOM check here.
+    # After password creation, resp.url should be  /phone_setup
+    # Now we have to get this page, then extract the correct auth token
+    # so we can then turn around and post the confirmation token back.
+    resp = t.client.get(resp.url)
+    dom = resp_to_dom(resp)
+    auth_token = authenticity_token(dom, '#new_user_phone_form')
 
-    # visit phone setup page and submit phone number
+    # Now post with the correct tokens
     phone_post = t.client.post(
-        '/phone_setup',
+        resp.url,
         data={
             '_method': 'patch',
             'user_phone_form[international_code]': 'US',
             'user_phone_form[phone]': phone_numbers[randint(1, 1000)],
             'user_phone_form[otp_delivery_preference]': 'sms',
-            'authenticity_token': authenticity_token(dom),
+            'authenticity_token': auth_token,
             'commit': 'Send security code',
         },
         auth=auth,
         catch_response=True
     )
+
     with phone_post as resp:
         dom = resp_to_dom(resp)
-
         try:
             otp_code = dom.find('input[name="code"]')[0].attrib['value']
         except Exception as error:
-            resp.failure("""
-                There is a problem creating this account: {}.
-                Here is the response content: {}
-                """.format(error, resp.content))
+            resp.failure(
+                "There was a problem with the OTP code: {}.".format(error))
             return
 
     # visit security code page and submit pre-filled OTP
@@ -300,16 +314,25 @@ def signup(t, signup_url=None):
         auth=auth
     )
     dom = resp_to_dom(resp)
+    key = dom.find('.my4.border-box.separator-text').text()
 
-    # click Continue on personal key page
-    t.client.post(
+    # Clicking "Continue" on key page triggers a modal, to which we post:
+    resp = t.client.post(
         '/sign_up/personal_key',
         data={
-            'authenticity_token': authenticity_token(dom),
-            'commit': 'Continue',
+            'authenticity_token': authenticity_token(dom, '#confirm-key'),
+            'personal_key': key,
+            'commit': 'Continue'
         },
         auth=auth
     )
+    # We should now be fully signed in and will return
+    # credentials + final page in case we with to log in again.
+    return {
+        'email': new_email,
+        'password': default_password,
+        'final_resp': resp
+    }
 
 
 class UserBehavior(locust.TaskSet):
@@ -341,16 +364,15 @@ class UserBehavior(locust.TaskSet):
         login(self, credentials)
         logout(self)
 
-    @locust.task(2)
+    @locust.task(10)
     def idp_create_account(self):
         """
         Create an account from within the IDP.
 
-        This is given a low weight because it's not common
-        in the real world.
+        This has a low weight because it's uncommon in the real world.
         """
-        signup(self)
-        logout(self)
+        new_account = signup(self)
+        logout(self, new_account['final_resp'].url)
 
     @locust.task(2)
     def sp_rails_change_pass(self):
@@ -399,7 +421,8 @@ class UserBehavior(locust.TaskSet):
         with self.client.get(root_url, catch_response=True) as resp:
             dom = resp_to_dom(resp)
             signin_link = dom.find(
-                'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
+                'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]'
+            ).eq(0)
 
             if not signin_link:
                 resp.failure(
@@ -417,9 +440,9 @@ class UserBehavior(locust.TaskSet):
                     )
                 )
             # we should have been redirected to
-            # https://login.test.usajobs.gov/Access/Transition. Let's do a quick
-            # check.
-            if "https://login.test.usajobs.gov/Access/Transition" not in resp.url:
+            # https://login.test.usajobs.gov/Access/Transition.
+            # Let's do a quick check.
+            if "login.test.usajobs.gov/Access/Transition" not in resp.url:
                 resp.failure(
                     """"
                     We do not appear to have been redirected to
@@ -450,7 +473,6 @@ class UserBehavior(locust.TaskSet):
         credentials = random_cred()
         login(self, credentials)
         change_pass(self, "thisisanewpass")
-        # now change it back.
         change_pass(self, credentials['password'])
         logout(self)
 
@@ -465,7 +487,8 @@ class UserBehavior(locust.TaskSet):
         with self.client.get(root_url, catch_response=True) as resp:
             dom = resp_to_dom(resp)
             signin_link = dom.find(
-                'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]:first')
+                'a.user-logged-out[href="/Applicant/ProfileDashboard/Home"]'
+            ).eq(0)
 
             if not signin_link:
                 resp.failure(
@@ -486,7 +509,7 @@ class UserBehavior(locust.TaskSet):
             # we should have been redirected to
             # https://login.test.usajobs.gov/Access/Transition.
             # Let's do a quick check.
-            if "https://login.test.usajobs.gov/Access/Transition" not in resp.url:
+            if "login.test.usajobs.gov/Access/Transition" not in resp.url:
                 resp.failure(
                     """"
                     We do not appear to have been redirected to
