@@ -18,11 +18,40 @@ describe TwoFactorAuthCode::PhoneDeliveryPresenter do
       reauthn: false,
     }
   end
+  let(:data_for_locale) do
+    data_for_locale = {}
+    I18n.available_locales.each do |locale|
+      data_for_locale[locale]=     {
+          confirmation_for_phone_change: false,
+          confirmation_for_idv: false,
+          phone_number: '5555559876',
+          code_value: '999999',
+          otp_delivery_preference: 'sms',
+          reenter_phone_number_path: "#{locale == :en ? nil : '/'+locale.to_s}/verify/phone",
+          unconfirmed_phone: true,
+          totp_enabled: false,
+          personal_key_unavailable: true,
+          reauthn: false,
+      }
+    end
+    data_for_locale
+  end
   let(:presenter) do
     TwoFactorAuthCode::PhoneDeliveryPresenter.new(
       data: data,
       view: view
     )
+  end
+  let(:presenter_for_locale) do
+    presenter_for_locale = {}
+    I18n.available_locales.each do |locale|
+      presenter_for_locale[locale]=    TwoFactorAuthCode::PhoneDeliveryPresenter.new(
+          data: data_for_locale[locale],
+          view: view,
+
+      )
+    end
+    presenter_for_locale
   end
 
   it 'is a subclass of GenericDeliveryPresenter' do
@@ -53,6 +82,24 @@ describe TwoFactorAuthCode::PhoneDeliveryPresenter do
   end
 
   describe '#fallback_links' do
+    it 'handles multiple locales' do
+      I18n.available_locales.each do |locale|
+        I18n.locale = locale
+        presenter_for_locale[locale].fallback_links.each do |html|
+          if locale == :en
+            expect(html).not_to match(%r{href="/en/})
+          else
+            expect(html).to match(%r{href="/#{locale}/})
+          end
+        end
+        if locale == :en
+          expect(presenter_for_locale[locale].cancel_link).not_to match(%r{/en/})
+        else
+          expect(presenter_for_locale[locale].cancel_link).to match(%r{/#{locale}/})
+        end
+      end
+    end
+
     context 'with totp enabled' do
       before do
         data[:totp_enabled] = true

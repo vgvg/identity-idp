@@ -20,9 +20,9 @@ module TwoFactorAuthCode
 
     def cancel_link
       if reauthn
-        account_path
+        account_path(locale: LinkLocaleResolver.locale)
       else
-        sign_out_path
+        sign_out_path(locale: LinkLocaleResolver.locale)
       end
     end
 
@@ -41,14 +41,14 @@ module TwoFactorAuthCode
     def sms_link
       view.link_to(
         t('devise.two_factor_authentication.totp_fallback.sms_link_text'),
-        otp_send_path(otp_delivery_selection_form: { otp_delivery_preference: 'sms' })
+        otp_send_path(locale: LinkLocaleResolver.locale, otp_delivery_selection_form: { otp_delivery_preference: 'sms' })
       )
     end
 
     def voice_link
       view.link_to(
         t('devise.two_factor_authentication.totp_fallback.voice_link_text'),
-        otp_send_path(otp_delivery_selection_form: { otp_delivery_preference: 'voice' })
+        otp_send_path(locale: LinkLocaleResolver.locale, otp_delivery_selection_form: { otp_delivery_preference: 'voice' })
       )
     end
   end
