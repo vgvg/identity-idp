@@ -19,12 +19,6 @@ module Users
       analytics.track_event(Analytics::MULTI_FACTOR_AUTH_PHONE_SETUP, result.to_h)
 
       if result.success?
-        # Rails.logger.info "XXX" +
-        #                       if is_carrier_google_voice?(@user_phone_form.phone)
-        #                         flash.now[:error] = "Sorry that phone number is Google Voice. Please choose another phone number"
-        #                         render :index
-        #                         return
-        #                       end
         process_valid_form
       else
         render :index
